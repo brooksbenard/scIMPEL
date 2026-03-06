@@ -2,7 +2,9 @@
 title: "GSE205154: Custom survival-based reference with derive_reference_from_bulk"
 author: "PhenoMapR"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+  rmarkdown::html_vignette:
+    code_folding: hide
 vignette: >
   %\VignetteIndexEntry{GSE205154 custom reference}
   %\VignetteEngine{knitr::rmarkdown}
@@ -21,7 +23,7 @@ vignette: >
 ## 1. Load expression and phenotype from vignette directory
 
 ```{r load-data}
-library(PhenoMapR)
+suppressPackageStartupMessages(library(PhenoMapR))
 
 vignette_dir <- if (dir.exists("Vignettes")) "Vignettes" else "."
 info_path <- file.path(vignette_dir, "GSE205154.info.txt")
@@ -98,7 +100,7 @@ dat$score_custom <- scores_custom[match(dat$sample_id, rownames(scores_custom)),
 ## 4. Primary tumors only: Kaplan–Meier by custom score
 
 ```{r km-primary}
-library(survival)
+suppressPackageStartupMessages(library(survival))
 dat_primary <- dat[dat$tumor_type == "Primary", ]
 dat_primary$custom_grp <- ifelse(
   dat_primary$score_custom >= median(dat_primary$score_custom, na.rm = TRUE),

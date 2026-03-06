@@ -7,11 +7,8 @@ if (file.exists("DESCRIPTION") && read.dcf("DESCRIPTION")[1, "Package"] == "Phen
   if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools", repos = "https://cloud.r-project.org")
   devtools::load_all(".")
 }
-library(PhenoMapR)
-library(survival)
-
-fig_dir <- "Vignettes/figures"
-dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
+suppressPackageStartupMessages(library(PhenoMapR))
+suppressPackageStartupMessages(library(survival))
 
 vignette_dir <- "Vignettes"
 info_path <- file.path(vignette_dir, "GSE205154.info.txt")
@@ -67,11 +64,9 @@ cat("\n========== Primary: KM by Pancreatic score ==========\n")
 dat_primary <- dat[dat$tumor_type == "Primary", ]
 dat_primary$score_grp <- ifelse(dat_primary$score_Pancreatic >= median(dat_primary$score_Pancreatic, na.rm = TRUE), "High", "Low")
 fit_primary <- survfit(Surv(survival_time, survival_event) ~ score_grp, data = dat_primary)
-pdf(file.path(fig_dir, "GSE205154_km_primary_precog.pdf"), width = 5, height = 4)
-plot(fit_primary, col = c("blue", "red"), lwd = 2, xlab = "Time", ylab = "Survival probability",
+plot(fit_primary, col = c("#2166AC", "#B2182B"), lwd = 2, xlab = "Time", ylab = "Survival probability",
      main = "GSE205154 Primary: KM by PRECOG Pancreatic score")
-legend("bottomleft", legend = c("Low score", "High score"), col = c("blue", "red"), lwd = 2, bty = "n")
-dev.off()
+legend("bottomleft", legend = c("Low score", "High score"), col = c("#2166AC", "#B2182B"), lwd = 2, bty = "n")
 lr_primary <- survdiff(Surv(survival_time, survival_event) ~ score_grp, data = dat_primary)
 cat("Primary tumors — Log-rank p-value:", round(1 - pchisq(lr_primary$chisq, 1), 4), "\n")
 
@@ -79,11 +74,9 @@ cat("\n========== Metastatic: KM by Pancreatic_Metastasis score ==========\n")
 dat_met <- dat[dat$tumor_type == "Met", ]
 dat_met$score_grp <- ifelse(dat_met$score_Pancreatic_Metastasis >= median(dat_met$score_Pancreatic_Metastasis, na.rm = TRUE), "High", "Low")
 fit_met <- survfit(Surv(survival_time, survival_event) ~ score_grp, data = dat_met)
-pdf(file.path(fig_dir, "GSE205154_km_metastatic_precog.pdf"), width = 5, height = 4)
-plot(fit_met, col = c("blue", "red"), lwd = 2, xlab = "Time", ylab = "Survival probability",
+plot(fit_met, col = c("#2166AC", "#B2182B"), lwd = 2, xlab = "Time", ylab = "Survival probability",
      main = "GSE205154 Metastatic: KM by PRECOG Pancreatic_Metastasis score")
-legend("bottomleft", legend = c("Low score", "High score"), col = c("blue", "red"), lwd = 2, bty = "n")
-dev.off()
+legend("bottomleft", legend = c("Low score", "High score"), col = c("#2166AC", "#B2182B"), lwd = 2, bty = "n")
 lr_met <- survdiff(Surv(survival_time, survival_event) ~ score_grp, data = dat_met)
 cat("Metastatic — Log-rank p-value:", round(1 - pchisq(lr_met$chisq, 1), 4), "\n")
 
@@ -130,13 +123,10 @@ cat("\n========== Metastatic: KM by custom score ==========\n")
 dat_met <- dat[dat$tumor_type == "Met", ]
 dat_met$custom_grp <- ifelse(dat_met$score_custom >= median(dat_met$score_custom, na.rm = TRUE), "High", "Low")
 fit_met_c <- survfit(Surv(survival_time, survival_event) ~ custom_grp, data = dat_met)
-pdf(file.path(fig_dir, "GSE205154_km_metastatic_custom.pdf"), width = 5, height = 4)
-plot(fit_met_c, col = c("blue", "red"), lwd = 2, xlab = "Time", ylab = "Survival probability",
+plot(fit_met_c, col = c("#2166AC", "#B2182B"), lwd = 2, xlab = "Time", ylab = "Survival probability",
      main = "GSE205154 Metastatic: KM by custom survival-based score")
-legend("bottomleft", legend = c("Low score", "High score"), col = c("blue", "red"), lwd = 2, bty = "n")
-dev.off()
+legend("bottomleft", legend = c("Low score", "High score"), col = c("#2166AC", "#B2182B"), lwd = 2, bty = "n")
 lr_met_c <- survdiff(Surv(survival_time, survival_event) ~ custom_grp, data = dat_met)
 cat("Metastatic (custom) — Log-rank p-value:", round(1 - pchisq(lr_met_c$chisq, 1), 4), "\n")
 
-cat("\nDone. Plots saved to", fig_dir, "\n")
-list.files(fig_dir, pattern = "GSE205154")
+cat("\nDone. KM plots are shown above (not saved). For HTML vignette with plots, render the Rmd files.\n")

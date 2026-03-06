@@ -1,27 +1,29 @@
 ---
-title: "GSE205154: Bulk PDAC scoring and survival stratification"
-author: "PhenoMapR"
+title: "Scoring bulk gene expression samples with PhenoMapR"
+author: "Brooks Benard"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{GSE205154 bulk survival}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+output:
+  html_document:
+    code_folding: hide
 ---
 
 ## Overview
 
-[GSE205154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE205154) contains **bulk RNA-seq** gene expression for **289 primary and metastatic pancreatic ductal adenocarcinoma (PDAC)** samples (Sears et al.). This vignette uses the **expression matrix** and **clinical info** files in the vignette directory:
+This vignette is an **example of using PhenoMapR to score bulk RNA-seq samples** and to **show that the resulting score stratifies outcome**. PhenoMapR has built-in pan-cancer outcomes meta-z score signatures from [PRECOG 2.0](https://precog.stanford.edu/). To demonstrate that PhenoMapR can assign prognostic risk to patient samples profiled by bulk RNAseq, we use the [GSE205154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE205154) dataset: **289 primary and metastatic pancreatic ductal adenocarcinoma (PDAC)** samples with gene expression and overall survival (Sears et al.). Pre-processed gene expression and cleaned clinical annotations were obtained from [PRECOG](https://precog.stanford.edu/). After scoring samples with PhenoMapR’s built-in PRECOG references, we stratify by score (high vs low) and demonstrate that the PhenoMapR score separates survival in both primary and metastatic groups.
+
+**Data files** (downloadable from [PRECOG](https://precog.stanford.edu/)):
 
 - `GSE205154.GPL20301.matrix.txt` — normalized expression (genes × samples)
 - `GSE205154.info.txt` — sample annotations (Tumor_Type: Primary / Met, OS_Time, OS_Status)
 
-Analyses are kept **separate for primary tumors and metastatic samples**: we score all samples with both PRECOG references, then run Kaplan–Meier and stratification for **primary only** (using the Pancreatic score) and for **metastatic only** (using the Pancreatic_Metastasis score).
 
-## 1. Load expression and phenotype from vignette directory
+## 1. Load bulk expression and clinical annotations for GSE205154
+
+Load the expression matrix and clinical info so we can score samples with PhenoMapR and link scores to outcome.
 
 ```{r load-data}
-library(PhenoMapR)
+knitr::opts_chunk$set(fig.width = 6, fig.height = 6, out.width = "100%")
+suppressPackageStartupMessages(library(PhenoMapR))
 
 # Files in the same directory as this vignette
 vignette_dir <- if (dir.exists("Vignettes")) "Vignettes" else "."
@@ -62,15 +64,28 @@ message("Expression: ", nrow(bulk_mat), " genes × ", ncol(bulk_mat), " samples"
 message("Phenotype: ", nrow(pheno), " samples (Primary: ", sum(pheno$tumor_type == "Primary"), ", Met: ", sum(pheno$tumor_type == "Met"), ")")
 ```
 
-## 2. Score samples with PRECOG Pancreatic and Pancreatic_Metastasis
+
+
+## 2. Score bulk samples with PhenoMapR
+
+Score all samples with PhenoMapR using the built-in meta-z score signatures for Adult PRECOG **Pancreatic** (primary) and **Pancreatic_Metastasis**. By assigning a prognostic risk score to the samples, we should be able to identify patients expressing more adversely prognostic signatures as well as more favorably prognostic signatures and this should stratify outcomes.
 
 ```{r score-precog}
+# To assign a PhenoMap score to each sample, pass the bulk gene expression matrix
+# to the expression argument, select the reference database to score against (can
+# be one of: precog, tcga, pediatric_precog, or ici_precog, and specify the cancer
+# type to score against (use list_cancer_types(reference = "precog") to see available
+# cancer types)
+
+# Score all samples using the Primary PAAD signature
 scores_primary <- score_expression(
   expression = bulk_mat,
   reference = "precog",
   cancer_type = "Pancreatic",
   verbose = TRUE
 )
+
+# Score all samples using the Metastatic PAAD signature
 scores_met <- score_expression(
   expression = bulk_mat,
   reference = "precog",
@@ -78,6 +93,7 @@ scores_met <- score_expression(
   verbose = TRUE
 )
 
+# make a combined dataframe of sample clinical annotations and PhenoMap scores 
 col_pan <- grep("Pancreatic$", colnames(scores_primary), value = TRUE)[1]
 col_met <- grep("Pancreatic_Metastasis", colnames(scores_met), value = TRUE)[1]
 scores_df <- data.frame(
@@ -89,24 +105,66 @@ scores_df <- data.frame(
 dat <- merge(pheno, scores_df, by = "sample_id")
 ```
 
-## 3. Primary tumors only: Kaplan–Meier by PRECOG Pancreatic score
+## 3. Primary vs Metastatic outcomes
+
+Before seeing if PhenoMapR scores stratify outcomes, let's see if the primary and metastatic patients in the study show differences in outcomes.
+
+```{r primary-vs-met}
+suppressPackageStartupMessages(library(survival))
+suppressPackageStartupMessages(library(survminer))
+# Unnamed vector: order matches strata (Met first, then Primary). Named palettes trigger scale warnings.
+pal_tumor <- c("darkred", "tan")  # Metastatic, Primary
+
+fit_primary <- survfit(Surv(survival_time, survival_event) ~ tumor_type, data = dat)
+lr_primary <- survdiff(Surv(survival_time, survival_event) ~ tumor_type, data = dat)
+pval_primary <- 1 - pchisq(lr_primary$chisq, 1)
+cox_primary <- coxph(Surv(survival_time, survival_event) ~ tumor_type, data = dat)
+hr_primary <- exp(coef(cox_primary))[1]
+ci_primary <- as.vector(exp(confint(cox_primary)))
+label_primary <- sprintf("p = %s\nHR = %.2f (95%% CI: %.2f-%.2f)",
+  format.pval(pval_primary, digits = 2, eps = 0.001), hr_primary, ci_primary[1], ci_primary[2])
+max_time_primary <- max(dat$survival_time, na.rm = TRUE)
+ggsurvplot(fit_primary, data = dat, palette = pal_tumor, risk.table = FALSE,
+           title = "Survival by Primary vs Metastatic status",
+           xlab = "Time", ylab = "Survival probability", legend.title = "Status",
+           legend.labs = c("Metastatic", "Primary"),
+           pval = label_primary, pval.coord = c(max_time_primary * 0.5, 0.95), pval.size = 3.5)
+```
+
+It seems like patients with metastatic disease trend towards worse outcomes but it's not statistically significant.
+
+
+## 4. Primary tumors: PhenoMapR stratifies outcome
+
+Stratify primary samples by PhenoMapR score (high vs low median split) and show that the **Pancreatic** score stratifies survival.
 
 ```{r km-primary}
-library(survival)
+# Unnamed vector: order matches strata (High first, then Low). Named palettes can trigger scale warnings.
+pal_km <- c("#B2182B", "#2166AC")  # High (adverse), Low (favorable)
 dat_primary <- dat[dat$tumor_type == "Primary", ]
 dat_primary$score_grp <- ifelse(
   dat_primary$score_Pancreatic >= median(dat_primary$score_Pancreatic, na.rm = TRUE),
   "High", "Low"
 )
 fit_primary <- survfit(Surv(survival_time, survival_event) ~ score_grp, data = dat_primary)
-plot(fit_primary, col = c("blue", "red"), lwd = 2, xlab = "Time", ylab = "Survival probability",
-     main = "GSE205154 Primary tumors: Kaplan–Meier by PRECOG Pancreatic score")
-legend("bottomleft", legend = c("Low score", "High score"), col = c("blue", "red"), lwd = 2, bty = "n")
 lr_primary <- survdiff(Surv(survival_time, survival_event) ~ score_grp, data = dat_primary)
-message("Primary tumors — Log-rank p-value: ", round(1 - pchisq(lr_primary$chisq, 1), 4))
+pval_primary <- 1 - pchisq(lr_primary$chisq, 1)
+cox_primary <- coxph(Surv(survival_time, survival_event) ~ score_grp, data = dat_primary)
+hr_primary <- exp(coef(cox_primary))[1]
+ci_primary <- as.vector(exp(confint(cox_primary)))
+label_primary <- sprintf("p = %s\nHR = %.2f (95%% CI: %.2f-%.2f)",
+  format.pval(pval_primary, digits = 2, eps = 0.001), hr_primary, ci_primary[1], ci_primary[2])
+max_time_primary <- max(dat_primary$survival_time, na.rm = TRUE)
+ggsurvplot(fit_primary, data = dat_primary, palette = pal_km, risk.table = FALSE,
+           title = "Survival by PhenoMapR score in Primary tumors",
+           xlab = "Time", ylab = "Survival probability", legend.title = "PhenoMapR Score",
+           legend.labs = c("High", "Low"),
+           pval = label_primary, pval.coord = c(max_time_primary * 0.5, 0.95), pval.size = 3.5)
 ```
 
-## 4. Metastatic samples only: Kaplan–Meier by PRECOG Pancreatic_Metastasis score
+## 5. Metastatic samples: PhenoMapR stratifies outcome
+
+Stratify metastatic samples by PhenoMapR score (high vs low median split) and show that the **Pancreatic_Metastasis** score stratifies survival in this subset.
 
 ```{r km-metastatic}
 dat_met <- dat[dat$tumor_type == "Met", ]
@@ -115,14 +173,25 @@ dat_met$score_grp <- ifelse(
   "High", "Low"
 )
 fit_met <- survfit(Surv(survival_time, survival_event) ~ score_grp, data = dat_met)
-plot(fit_met, col = c("blue", "red"), lwd = 2, xlab = "Time", ylab = "Survival probability",
-     main = "GSE205154 Metastatic: Kaplan–Meier by PRECOG Pancreatic_Metastasis score")
-legend("bottomleft", legend = c("Low score", "High score"), col = c("blue", "red"), lwd = 2, bty = "n")
 lr_met <- survdiff(Surv(survival_time, survival_event) ~ score_grp, data = dat_met)
-message("Metastatic samples — Log-rank p-value: ", round(1 - pchisq(lr_met$chisq, 1), 4))
+pval_met <- 1 - pchisq(lr_met$chisq, 1)
+cox_met <- coxph(Surv(survival_time, survival_event) ~ score_grp, data = dat_met)
+hr_met <- exp(coef(cox_met))[1]
+ci_met <- as.vector(exp(confint(cox_met)))
+label_met <- sprintf("p = %s\nHR = %.2f (95%% CI: %.2f-%.2f)",
+  format.pval(pval_met, digits = 2, eps = 0.001), hr_met, ci_met[1], ci_met[2])
+max_time_met <- max(dat_met$survival_time, na.rm = TRUE)
+ggsurvplot(fit_met, data = dat_met, palette = pal_km, risk.table = FALSE,
+           title = "Survival by PhenoMapR score in Metastatic Patients",
+           xlab = "Time", ylab = "Survival probability", legend.title = "PhenoMapR Score",
+           legend.labs = c("High", "Low"),
+           pval = label_met, pval.coord = c(max_time_met * 0.5, 0.95), pval.size = 3.5)
 ```
 
-## 5. References
+## 6. Summary
+PhenoMapR can take a bulk expression dataset and assign prognostic risk scores and significantly stratify outcomes in both primary and metastatic disease in PAAD. In this case, we had access to outcomes annotations for the cohort but it is reasonable to assume many datasets profiled with bulk gene expression do not have outcomes data available or reported. In these cases, PhenoMapR can nominate samples that are on the extremes of the phenotype space (e.g. survival) and help define sample groupings.
 
-- **GSE205154**: [Bulk RNA-Seq gene expression for 289 primary and metastatic PDAC samples](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE205154) (GEO). Place `GSE205154.GPL20301.matrix.txt` and `GSE205154.info.txt` in the vignette directory.
-- **PhenoMapR PRECOG**: `Pancreatic` and `Pancreatic_Metastasis` from PRECOG 2.0.
+## 7. References
+
+- **GSE205154**: Sears et al. Bulk RNA-Seq gene expression for 289 primary and metastatic PDAC samples. *Nature Cancer* (2025). [GEO: GSE205154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE205154). 
+- **PRECOG 2.0**: Benard B et al. PRECOG 2.0: an updated resource of pan-cancer gene-level prognostic meta-z scores. *Nucleic Acids Research* (2026). [https://academic.oup.com/nar/article/54/D1/D1579/8324954](https://academic.oup.com/nar/article/54/D1/D1579/8324954).
