@@ -1650,7 +1650,7 @@ message(sprintf(&quot;Genes: %d | Cells: %d | Samples: %s&quot;, n_genes, n_cell
 Pancreatic Primary Meta-z scores from PRECOG 2.0. THen add these scores
 as metadata to the original Seurat object.</p>
 <pre class="r"><code># Score with PRECOG primary pancreatic reference
-scores_primary &lt;- score_expression(
+scores_primary &lt;- PhenoMap(
   expression = seurat,
   reference = &quot;precog&quot;,
   cancer_type = &quot;Pancreatic&quot;,
@@ -1925,7 +1925,7 @@ dim(seurat2)</code></pre>
 <div id="score-cells-cra001160" class="section level3">
 <h3>Score cells (CRA001160)</h3>
 <pre class="r"><code>t0 &lt;- Sys.time()
-scores2 &lt;- score_expression(
+scores2 &lt;- PhenoMap(
   expression = seurat2,
   reference = &quot;precog&quot;,
   cancer_type = &quot;Pancreatic&quot;,

@@ -531,7 +531,7 @@ prognostic signatures and this should stratify outcomes.</p>
 # cancer types)
 
 # Score all samples using the Primary PAAD signature
-scores_primary &lt;- score_expression(
+scores_primary &lt;- PhenoMap(
   expression = bulk_mat,
   reference = &quot;precog&quot;,
   cancer_type = &quot;Pancreatic&quot;,
@@ -541,7 +541,7 @@ scores_primary &lt;- score_expression(
 <pre><code>## 7376 genes used for scoring against PancreaticCalculating scores...
 ## Completed scoring for Pancreatic</code></pre>
 <pre class="r"><code># Score all samples using the Metastatic PAAD signature
-scores_met &lt;- score_expression(
+scores_met &lt;- PhenoMap(
   expression = bulk_mat,
   reference = &quot;precog&quot;,
   cancer_type = &quot;Pancreatic_Metastasis&quot;,

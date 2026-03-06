@@ -91,7 +91,7 @@ head(ref_custom)
 ## 3. Score samples with the custom reference
 
 ```{r score-custom}
-scores_custom <- score_expression(
+scores_custom <- PhenoMap(
   expression = bulk_mat,
   reference = ref_custom,
   z_score_cutoff = 2,

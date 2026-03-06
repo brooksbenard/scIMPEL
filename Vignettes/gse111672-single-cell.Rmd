@@ -77,7 +77,7 @@ if (!has_data) {
 Apply PhenoMapR to the GSE111672 Seurat object using the built-in Pancreatic Primary Meta-z scores from PRECOG 2.0. THen add these scores as metadata to the original Seurat object.
 ```{r score-cells}
 # Score with PRECOG primary pancreatic reference
-scores_primary <- score_expression(
+scores_primary <- PhenoMap(
   expression = seurat,
   reference = "precog",
   cancer_type = "Pancreatic",
@@ -332,7 +332,7 @@ if (!is.null(seurat2)) {
 ```{r score-cells-cra001160}
 if (!is.null(seurat2)) {
   t0 <- Sys.time()
-  scores2 <- score_expression(
+  scores2 <- PhenoMap(
     expression = seurat2,
     reference = "precog",
     cancer_type = "Pancreatic",

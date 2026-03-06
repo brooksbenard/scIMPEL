@@ -83,7 +83,7 @@ Score all samples with PhenoMapR using the built-in meta-z score signatures for 
 # cancer types)
 
 # Score all samples using the Primary PAAD signature
-scores_primary <- score_expression(
+scores_primary <- PhenoMap(
   expression = bulk_mat,
   reference = "precog",
   cancer_type = "Pancreatic",
@@ -91,7 +91,7 @@ scores_primary <- score_expression(
 )
 
 # Score all samples using the Metastatic PAAD signature
-scores_met <- score_expression(
+scores_met <- PhenoMap(
   expression = bulk_mat,
   reference = "precog",
   cancer_type = "Pancreatic_Metastasis",
