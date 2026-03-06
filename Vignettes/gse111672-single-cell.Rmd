@@ -35,36 +35,42 @@ report_timing <- function(step_name, t0, obj = NULL) {
 
 rds_path <- "Vignettes/PAAD_GSE111672_seurat.rds"
 if (!file.exists(rds_path)) rds_path <- "PAAD_GSE111672_seurat.rds"
-t0 <- Sys.time()
-seurat <- readRDS(rds_path)
-report_timing("Load GSE111672", t0, seurat)
-
-# Load CRA001160 early if available (for shared cell type palette alignment)
-rds_path2 <- "Vignettes/PAAD_CRA001160_seurat.rds"
-if (!file.exists(rds_path2)) rds_path2 <- "PAAD_CRA001160_seurat.rds"
-if (file.exists(rds_path2)) {
-  seurat2 <- readRDS(rds_path2)
+has_data <- file.exists(rds_path)
+knitr::opts_chunk$set(eval = has_data)
+if (!has_data) {
+  message("PAAD_GSE111672_seurat.rds not found. See Vignettes/README.md for download instructions.")
 } else {
-  seurat2 <- NULL
+  t0 <- Sys.time()
+  seurat <- readRDS(rds_path)
+  report_timing("Load GSE111672", t0, seurat)
+
+  # Load CRA001160 early if available (for shared cell type palette alignment)
+  rds_path2 <- "Vignettes/PAAD_CRA001160_seurat.rds"
+  if (!file.exists(rds_path2)) rds_path2 <- "PAAD_CRA001160_seurat.rds"
+  if (file.exists(rds_path2)) {
+    seurat2 <- readRDS(rds_path2)
+  } else {
+    seurat2 <- NULL
+  }
+
+  # Shared cell type palette: same colors for same cell types across both datasets
+  celltype_col <- "Celltype..major.lineage."
+  all_celltypes <- sort(unique(c(
+    as.character(seurat@meta.data[[celltype_col]]),
+    if (!is.null(seurat2)) as.character(seurat2@meta.data[[celltype_col]]) else character(0)
+  )))
+  base_colors <- c("#4477AA", "#EE6677", "#228833", "#CCBB44", "#66CCEE", "#AA3377",
+    "#BBBBBB", "#EE8866", "#FFAABB", "#99DDFF", "#DDDDDD", "#77AADD")
+  shared_pal_lineage <- setNames(
+    if (length(all_celltypes) <= 12) base_colors[seq_len(length(all_celltypes))] else colorRampPalette(base_colors)(length(all_celltypes)),
+    all_celltypes
+  )
+
+  n_genes <- nrow(seurat)
+  n_cells <- ncol(seurat)
+  n_samples <- if ("Sample" %in% names(seurat@meta.data)) length(unique(seurat@meta.data$Sample)) else NA
+  message(sprintf("Genes: %d | Cells: %d | Samples: %s", n_genes, n_cells, if (is.na(n_samples)) "N/A" else n_samples))
 }
-
-# Shared cell type palette: same colors for same cell types across both datasets
-celltype_col <- "Celltype..major.lineage."
-all_celltypes <- sort(unique(c(
-  as.character(seurat@meta.data[[celltype_col]]),
-  if (!is.null(seurat2)) as.character(seurat2@meta.data[[celltype_col]]) else character(0)
-)))
-base_colors <- c("#4477AA", "#EE6677", "#228833", "#CCBB44", "#66CCEE", "#AA3377",
-  "#BBBBBB", "#EE8866", "#FFAABB", "#99DDFF", "#DDDDDD", "#77AADD")
-shared_pal_lineage <- setNames(
-  if (length(all_celltypes) <= 12) base_colors[seq_len(length(all_celltypes))] else colorRampPalette(base_colors)(length(all_celltypes)),
-  all_celltypes
-)
-
-n_genes <- nrow(seurat)
-n_cells <- ncol(seurat)
-n_samples <- if ("Sample" %in% names(seurat@meta.data)) length(unique(seurat@meta.data$Sample)) else NA
-message(sprintf("Genes: %d | Cells: %d | Samples: %s", n_genes, n_cells, if (is.na(n_samples)) "N/A" else n_samples))
 ```
 
 ### Score cells
@@ -307,33 +313,44 @@ report_timing("Proportion plot GSE111672", t0)
 if (is.null(seurat2)) {
   rds_path2 <- "Vignettes/PAAD_CRA001160_seurat.rds"
   if (!file.exists(rds_path2)) rds_path2 <- "PAAD_CRA001160_seurat.rds"
-  t0 <- Sys.time()
-  seurat2 <- readRDS(rds_path2)
-  report_timing("Load CRA001160", t0, seurat2)
+  if (file.exists(rds_path2)) {
+    t0 <- Sys.time()
+    seurat2 <- readRDS(rds_path2)
+    report_timing("Load CRA001160", t0, seurat2)
+  }
 }
-dim(seurat2)
-head(colnames(seurat2@meta.data))
+if (!is.null(seurat2)) {
+  dim(seurat2)
+  head(colnames(seurat2@meta.data))
+} else {
+  message("PAAD_CRA001160_seurat.rds not found; Example 2 skipped.")
+}
 ```
 
 ### Score cells (CRA001160)
 
 ```{r score-cells-cra001160}
-t0 <- Sys.time()
-scores2 <- score_expression(
-  expression = seurat2,
-  reference = "precog",
-  cancer_type = "Pancreatic",
-  assay = "RNA",
-  slot = "data",
-  verbose = TRUE
-)
-seurat2 <- add_scores_to_seurat(seurat2, scores2)
-report_timing("Score CRA001160", t0, seurat2)
+if (!is.null(seurat2)) {
+  t0 <- Sys.time()
+  scores2 <- score_expression(
+    expression = seurat2,
+    reference = "precog",
+    cancer_type = "Pancreatic",
+    assay = "RNA",
+    slot = "data",
+    verbose = TRUE
+  )
+  seurat2 <- add_scores_to_seurat(seurat2, scores2)
+  report_timing("Score CRA001160", t0, seurat2)
+}
 ```
 
 ### Score by cell type (CRA001160)
 
 ```{r score-by-celltype-cra001160}
+if (is.null(seurat2)) {
+  message("CRA001160 data not loaded; skipping.")
+} else {
 t0 <- Sys.time()
 df2 <- seurat2@meta.data
 score_col2 <- "weighted_sum_score_Pancreatic"
@@ -360,11 +377,15 @@ if (celltype_col2 %in% names(df2)) {
     labs(y = "PRECOG Pancreatic score", x = "Cluster", title = "CRA001160"))
 }
 report_timing("Cell type plot CRA001160", t0)
+}
 ```
 
 ### Prognostic markers (CRA001160)
 
 ```{r markers-cra001160, cache = FALSE}
+if (is.null(seurat2)) {
+  message("CRA001160 data not loaded; skipping.")
+} else {
 t0 <- Sys.time()
 scores_df2 <- seurat2@meta.data[, grep("weighted_sum_score", names(seurat2@meta.data)), drop = FALSE]
 groups2 <- define_prognostic_groups(scores_df2, percentile = 0.05)
@@ -386,11 +407,15 @@ if (!is.na(group_col2)) {
   }
 }
 report_timing("Marker analysis CRA001160", t0)
+}
 ```
 
 ### Marker heatmap (CRA001160)
 
 ```{r heatmap-markers-cra001160}
+if (is.null(seurat2) || is.null(markers2)) {
+  message("CRA001160 data or markers not available; skipping heatmap.")
+} else {
 t0 <- Sys.time()
 n_top <- 15
 expr2 <- tryCatch(
@@ -481,11 +506,15 @@ if (requireNamespace("pheatmap", quietly = TRUE)) {
           labCol = FALSE, main = "Top marker genes (all cells) - CRA001160")
 }
 report_timing("Heatmap CRA001160", t0)
+}
 ```
 
 ### Proportion by sample and cell type (CRA001160)
 
 ```{r proportion-by-sample-celltype-cra001160}
+if (is.null(seurat2)) {
+  message("CRA001160 data not available; skipping proportion plot.")
+} else {
 t0 <- Sys.time()
 sample_col2 <- if ("Sample" %in% names(seurat2@meta.data)) "Sample" else "Patient"
 meta_plot2 <- seurat2@meta.data
@@ -523,6 +552,7 @@ if (nrow(meta_plot2) > 0) {
   message("No Most Adverse or Most Favorable cells found; proportion plot skipped")
 }
 report_timing("Proportion plot CRA001160", t0)
+}
 ```
 
 ---

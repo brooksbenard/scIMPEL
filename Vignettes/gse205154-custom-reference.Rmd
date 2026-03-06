@@ -32,28 +32,33 @@ if (!file.exists(info_path)) {
   info_path <- "GSE205154.info.txt"
   matrix_path <- "GSE205154.GPL20301.matrix.txt"
 }
+has_data <- file.exists(info_path) && file.exists(matrix_path)
+knitr::opts_chunk$set(eval = has_data)
+if (!has_data) {
+  message("GSE205154 data files not found. See Vignettes/README.md for download instructions.")
+} else {
+  info <- read.delim(info_path, stringsAsFactors = FALSE, check.names = FALSE)
+  colnames(info)[colnames(info) == "Array"] <- "sample_id"
+  info$tumor_type <- info$Tumor_Type
+  info$survival_time <- as.numeric(info$OS_Time)
+  info$survival_event <- as.integer(info$OS_Status)
+  info <- info[!is.na(info$survival_time) & !is.na(info$survival_event), ]
 
-info <- read.delim(info_path, stringsAsFactors = FALSE, check.names = FALSE)
-colnames(info)[colnames(info) == "Array"] <- "sample_id"
-info$tumor_type <- info$Tumor_Type
-info$survival_time <- as.numeric(info$OS_Time)
-info$survival_event <- as.integer(info$OS_Status)
-info <- info[!is.na(info$survival_time) & !is.na(info$survival_event), ]
+  mat <- read.delim(matrix_path, stringsAsFactors = FALSE, check.names = FALSE)
+  mat$Name[mat$Name == "" | is.na(mat$Name)] <- NA
+  mat <- mat[!is.na(mat$Name), ]
+  mat <- mat[!duplicated(mat$Name), ]
+  rownames(mat) <- mat$Name
+  sample_cols <- grep("^GSM", colnames(mat), value = TRUE)
+  bulk_mat <- as.matrix(mat[, sample_cols])
+  mode(bulk_mat) <- "numeric"
 
-mat <- read.delim(matrix_path, stringsAsFactors = FALSE, check.names = FALSE)
-mat$Name[mat$Name == "" | is.na(mat$Name)] <- NA
-mat <- mat[!is.na(mat$Name), ]
-mat <- mat[!duplicated(mat$Name), ]
-rownames(mat) <- mat$Name
-sample_cols <- grep("^GSM", colnames(mat), value = TRUE)
-bulk_mat <- as.matrix(mat[, sample_cols])
-mode(bulk_mat) <- "numeric"
-
-keep <- intersect(colnames(bulk_mat), info$sample_id)
-bulk_mat <- bulk_mat[, keep, drop = FALSE]
-pheno <- info[info$sample_id %in% keep, ]
-pheno <- pheno[match(keep, pheno$sample_id), ]
-rownames(pheno) <- pheno$sample_id
+  keep <- intersect(colnames(bulk_mat), info$sample_id)
+  bulk_mat <- bulk_mat[, keep, drop = FALSE]
+  pheno <- info[info$sample_id %in% keep, ]
+  pheno <- pheno[match(keep, pheno$sample_id), ]
+  rownames(pheno) <- pheno$sample_id
+}
 ```
 
 ## 2. Derive custom reference from survival
