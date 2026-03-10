@@ -1,4 +1,4 @@
-# PhenoMapR [![](reference/figures/PhenoMapR_logo.png)](https://brooksbenard.github.io/PhenoMapR)
+# [![](reference/figures/PhenoMapR_logo.png)](https://brooksbenard.github.io/PhenoMapR) PhenoMapR
 
 **PhenoMapR** is a semi-supervised method to map phenotypes associated
 with bulk gene expression onto bulk, single cell, and spatial
