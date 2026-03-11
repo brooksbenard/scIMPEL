@@ -86,6 +86,30 @@
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"brooksbenard/PhenoMapR"</span><span class="op">)</span></span></code></pre></div>
 </div>
+<div class="section level2">
+<h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
+</h2>
+<p>Basic PhenoMapR requirements (if using built-in cancer references):<br><strong>1.</strong> User-provided gene expression input (bulk, single-cell, or spatial). <strong>2.</strong> Select a database reference to score against. <strong>3.</strong> Select the matching reference cancer type based on the input data cancer type.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Load PhenoMapR in your R session using:</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://brooksbenard.github.io/PhenoMapR">PhenoMapR</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Score samples in a bulk expression matrix</span></span>
+<span><span class="va">scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/PhenoMap.html">PhenoMap</a></span><span class="op">(</span></span>
+<span>  expression <span class="op">=</span> <span class="va">bulk_matrix</span>,     <span class="co"># genes (rownames) x samples (colnames)</span></span>
+<span>  reference <span class="op">=</span> <span class="st">"precog"</span>,         <span class="co"># can be one of precog, pediatric_precog, ici_precog, or tcga</span></span>
+<span>  cancer_type <span class="op">=</span> <span class="st">"BRCA"</span>          <span class="co"># use list_cancer_types(reference) to see avaliable options</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Score single-cell/spatial data</span></span>
+<span><span class="va">scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/PhenoMap.html">PhenoMap</a></span><span class="op">(</span></span>
+<span>  expression <span class="op">=</span> <span class="va">seurat_obj</span>,</span>
+<span>  reference <span class="op">=</span> <span class="st">"tcga"</span>,</span>
+<span>  cancer_type <span class="op">=</span> <span class="st">"LUAD"</span>,</span>
+<span>  assay <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="st">"Spatial"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">seurat_obj</span><span class="op">@</span><span class="va">assays</span><span class="op">)</span><span class="op">)</span> <span class="st">"Spatial"</span> <span class="kw">else</span> <span class="st">"RNA"</span>,</span>
+<span>  slot <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="st">"Spatial"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">seurat_obj</span><span class="op">@</span><span class="va">assays</span><span class="op">)</span><span class="op">)</span> <span class="st">"counts"</span> <span class="kw">else</span> <span class="st">"data"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
 </div>
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
