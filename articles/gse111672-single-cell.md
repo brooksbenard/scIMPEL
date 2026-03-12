@@ -232,7 +232,7 @@ if (!is.na(group_col)) {
 report_timing("Marker analysis GSE111672", t0)
 ```
 
-    ## [Marker analysis GSE111672] Runtime: 0.65 s | Memory: -
+    ## [Marker analysis GSE111672] Runtime: 0.67 s | Memory: -
 
 ### Marker heatmap
 
@@ -338,7 +338,7 @@ if (requireNamespace("pheatmap", quietly = TRUE)) {
 report_timing("Heatmap GSE111672", t0)
 ```
 
-    ## [Heatmap GSE111672] Runtime: 0.94 s | Memory: -
+    ## [Heatmap GSE111672] Runtime: 0.95 s | Memory: -
 
 ### Proportion by sample and cell type
 
@@ -498,7 +498,7 @@ report_timing("Cell type plot CRA001160", t0)
 
 ![](gse111672-single-cell_files/figure-html/score-by-celltype-cra001160-1.png)
 
-    ## [Cell type plot CRA001160] Runtime: 0.22 s | Memory: -
+    ## [Cell type plot CRA001160] Runtime: 0.18 s | Memory: -
 
 ### Prognostic markers (CRA001160)
 
@@ -532,7 +532,7 @@ report_timing("Marker analysis CRA001160", t0)
 
     ## Using Seurat FindMarkers: Most Adverse n=20, Most Favorable n=20
 
-    ## [Marker analysis CRA001160] Runtime: 0.65 s | Memory: -
+    ## [Marker analysis CRA001160] Runtime: 0.66 s | Memory: -
 
 ### Marker heatmap (CRA001160)
 
@@ -635,7 +635,7 @@ report_timing("Heatmap CRA001160", t0)
 
 ![](gse111672-single-cell_files/figure-html/heatmap-markers-cra001160-1.png)
 
-    ## [Heatmap CRA001160] Runtime: 0.10 s | Memory: -
+    ## [Heatmap CRA001160] Runtime: 0.09 s | Memory: -
 
 ### Proportion by sample and cell type (CRA001160)
 
@@ -685,7 +685,7 @@ report_timing("Proportion plot CRA001160", t0)
 
 ![](gse111672-single-cell_files/figure-html/proportion-by-sample-celltype-cra001160-1.png)
 
-    ## [Proportion plot CRA001160] Runtime: 0.22 s | Memory: -
+    ## [Proportion plot CRA001160] Runtime: 0.21 s | Memory: -
 
 ------------------------------------------------------------------------
 
