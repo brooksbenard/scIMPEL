@@ -285,10 +285,10 @@ info_path_253260 <- "vignettes/GSE253260_info.rds"
 
 if (!file.exists(expr_path_253260) && requireNamespace("googledrive", quietly = TRUE)) {
   googledrive::drive_deauth()
-  # Expression matrix
+  # Expression matrix (GSE253260 bulk expression)
   tryCatch(
     googledrive::drive_download(
-      googledrive::as_id("13womOrSDbQVsBWVH06Z91eD5-2PeFyoH"),
+      googledrive::as_id("1YuZQjGY6CTt-uicxRqYzp9t_tnIuQN4R"),
       path = expr_path_253260,
       overwrite = TRUE
     ),
@@ -299,7 +299,7 @@ if (!file.exists(expr_path_253260) && requireNamespace("googledrive", quietly = 
   # Optional: phenotype/info RDS (not required for scoring in this section)
   tryCatch(
     googledrive::drive_download(
-      googledrive::as_id("14UzRBPTsLN7D3d57eNaWTVwAP8ObCDwH"),
+      googledrive::as_id("1Tpb8JC-2wO0Qppi5kM1vRuYTwBD1vY8f"),
       path = info_path_253260,
       overwrite = TRUE
     ),
@@ -310,25 +310,9 @@ if (!file.exists(expr_path_253260) && requireNamespace("googledrive", quietly = 
 }
 ```
 
-    ## Could not download GSE253260 expression from Google Drive: ℹ In index: 1.
-    ## Caused by error in `.f()`:
-    ## ! Client error: (404) Not Found
-    ## File not found: 13womOrSDbQVsBWVH06Z91eD5-2PeFyoH.
-    ## • message: File not found: 13womOrSDbQVsBWVH06Z91eD5-2PeFyoH.
-    ## • domain: global
-    ## • reason: notFound
-    ## • location: fileId
-    ## • locationType: parameter
+    ## Could not download GSE253260 expression from Google Drive: Failed to open file vignettes/GSE253260_expression.rds.
 
-    ## Could not download GSE253260 info from Google Drive: ℹ In index: 1.
-    ## Caused by error in `.f()`:
-    ## ! Client error: (404) Not Found
-    ## File not found: 14UzRBPTsLN7D3d57eNaWTVwAP8ObCDwH.
-    ## • message: File not found: 14UzRBPTsLN7D3d57eNaWTVwAP8ObCDwH.
-    ## • domain: global
-    ## • reason: notFound
-    ## • location: fileId
-    ## • locationType: parameter
+    ## Could not download GSE253260 info from Google Drive: Failed to open file vignettes/GSE253260_info.rds.
 
 ``` r
 if (file.exists(expr_path_253260)) {
