@@ -94,7 +94,7 @@ if (!has_data) {
 }
 ```
 
-    ## [Load GSE111672] Runtime: 0.41 s | Memory: 24.1 Mb
+    ## [Load GSE111672] Runtime: 0.40 s | Memory: 24.1 Mb
 
     ## Genes: 1500 | Cells: 6122 | Samples: 3
 
@@ -340,7 +340,7 @@ if (requireNamespace("pheatmap", quietly = TRUE)) {
 report_timing("Heatmap GSE111672", t0)
 ```
 
-    ## [Heatmap GSE111672] Runtime: 2.22 s | Memory: -
+    ## [Heatmap GSE111672] Runtime: 2.24 s | Memory: -
 
 ### Proportion by sample and cell type
 
@@ -391,7 +391,7 @@ if (nrow(meta_plot) > 0) {
 report_timing("Proportion plot GSE111672", t0)
 ```
 
-    ## [Proportion plot GSE111672] Runtime: 3.20 s | Memory: -
+    ## [Proportion plot GSE111672] Runtime: 3.24 s | Memory: -
 
 ------------------------------------------------------------------------
 
@@ -461,7 +461,7 @@ if (!is.null(seurat2)) {
 
     ## Added 1 score column(s) to Seurat metadata
 
-    ## [Score CRA001160] Runtime: 0.75 s | Memory: 349.2 Mb
+    ## [Score CRA001160] Runtime: 0.74 s | Memory: 349.2 Mb
 
 ### Score by cell type (CRA001160)
 
@@ -536,7 +536,7 @@ report_timing("Marker analysis CRA001160", t0)
 
     ## Subsampled Other from 51697 to 5000 cells (memory limit)
 
-    ## [Marker analysis CRA001160] Runtime: 2.29 s | Memory: -
+    ## [Marker analysis CRA001160] Runtime: 2.25 s | Memory: -
 
 ### Marker heatmap (CRA001160)
 
@@ -689,7 +689,7 @@ report_timing("Proportion plot CRA001160", t0)
 
 ![](gse111672-single-cell_files/figure-html/proportion-by-sample-celltype-cra001160-1.png)
 
-    ## [Proportion plot CRA001160] Runtime: 0.23 s | Memory: -
+    ## [Proportion plot CRA001160] Runtime: 0.22 s | Memory: -
 
 ------------------------------------------------------------------------
 
