@@ -38,7 +38,9 @@ report_timing <- function(step_name, t0, obj = NULL) {
 }
 
 # Vignette data: local paths, then Google Drive (https://drive.google.com/drive/folders/1rKGZBX7sa_Iq8AJb1wcxiRc3oD6v6B5n)
-rds_path <- "vignettes/PAAD_GSE111672_seurat.rds"
+rds_subset <- system.file("extdata/vignette_subsets/PAAD_GSE111672_seurat_subset.rds", package = "PhenoMapR")
+use_subset <- nzchar(Sys.getenv("CI", "")) || nzchar(Sys.getenv("PKGDOWN_DEV_MODE", ""))
+rds_path <- if (use_subset && file.exists(rds_subset)) rds_subset else "vignettes/PAAD_GSE111672_seurat.rds"
 if (!file.exists(rds_path)) rds_path <- "Vignettes/PAAD_GSE111672_seurat.rds"
 if (!file.exists(rds_path)) rds_path <- "PAAD_GSE111672_seurat.rds"
 if (!file.exists(rds_path) && !nzchar(Sys.getenv("CI", "")) && requireNamespace("googledrive", quietly = TRUE)) {
@@ -59,7 +61,8 @@ if (!has_data) {
   report_timing("Load GSE111672", t0, seurat)
 
   # Load CRA001160 early if available (for shared cell type palette alignment)
-  rds_path2 <- "vignettes/PAAD_CRA001160_seurat.rds"
+  rds_subset2 <- system.file("extdata/vignette_subsets/PAAD_CRA001160_seurat_subset.rds", package = "PhenoMapR")
+  rds_path2 <- if (use_subset && file.exists(rds_subset2)) rds_subset2 else "vignettes/PAAD_CRA001160_seurat.rds"
   if (!file.exists(rds_path2)) rds_path2 <- "Vignettes/PAAD_CRA001160_seurat.rds"
   if (!file.exists(rds_path2)) rds_path2 <- "PAAD_CRA001160_seurat.rds"
   if (!file.exists(rds_path2) && !nzchar(Sys.getenv("CI", "")) && requireNamespace("googledrive", quietly = TRUE)) {
@@ -91,7 +94,9 @@ if (!has_data) {
 }
 ```
 
-    ## PAAD_GSE111672_seurat.rds not found. See Vignettes/README.md for download instructions.
+    ## [Load GSE111672] Runtime: 0.07 s | Memory: 2.9 Mb
+
+    ## Genes: 1500 | Cells: 400 | Samples: 1
 
 ### Score cells
 
@@ -109,8 +114,20 @@ scores_primary <- PhenoMap(
   slot = "data",
   verbose = TRUE
 )
-seurat <- add_scores_to_seurat(seurat, scores_primary)
+```
 
+    ## Detected input type: seurat
+
+    ## 624 genes used for scoring against PancreaticCalculating scores...
+    ## Completed scoring for Pancreatic
+
+``` r
+seurat <- add_scores_to_seurat(seurat, scores_primary)
+```
+
+    ## Added 1 score column(s) to Seurat metadata
+
+``` r
 # Sanity check: malignant cells should score higher (more adverse) than Acinar
 score_col <- grep("weighted_sum_score", names(scores_primary), value = TRUE)[1]
 mal_cells <- rownames(seurat@meta.data)[seurat@meta.data[[celltype_col]] == "Malignant"]
@@ -166,6 +183,8 @@ if (celltype_col %in% names(df)) {
 }
 ```
 
+![](gse111672-single-cell_files/figure-html/score-by-celltype-1.png)
+
 ### Prognostic markers
 
 We next identify the marker genes for the most phenotypically associated
@@ -197,8 +216,23 @@ if (!is.na(group_col)) {
     head(markers$favorable_markers)
   }
 }
+```
+
+    ## Using Seurat FindMarkers: Most Adverse n=20, Most Favorable n=20
+
+    ##          p_val avg_log2FC pct_in_group pct_rest     gene        p_adj
+    ## 1 3.816439e-66  14.081340         0.75    0.000     CPA2 5.724658e-63
+    ## 2 3.816439e-66  13.760232         0.75    0.000     SYCN 5.724658e-63
+    ## 3 3.580632e-62  12.804106         0.75    0.003      CEL 5.370947e-59
+    ## 4 3.580632e-62  14.519706         0.75    0.003   CELA3B 5.370947e-59
+    ## 5 3.947675e-62  10.978666         0.75    0.003 PNLIPRP1 5.921512e-59
+    ## 6 4.798002e-62   9.754496         0.75    0.003    CUZD1 7.197003e-59
+
+``` r
 report_timing("Marker analysis GSE111672", t0)
 ```
+
+    ## [Marker analysis GSE111672] Runtime: 0.65 s | Memory: -
 
 ### Marker heatmap
 
@@ -296,8 +330,15 @@ if (requireNamespace("pheatmap", quietly = TRUE)) {
   heatmap(mat_scaled, scale = "none", Colv = NA, col = heatmap_colors,
           labCol = FALSE, main = "Top marker genes (all cells)")
 }
+```
+
+![](gse111672-single-cell_files/figure-html/heatmap-markers-1.png)
+
+``` r
 report_timing("Heatmap GSE111672", t0)
 ```
+
+    ## [Heatmap GSE111672] Runtime: 0.94 s | Memory: -
 
 ### Proportion by sample and cell type
 
@@ -340,8 +381,15 @@ if (nrow(meta_plot) > 0) {
 } else {
   message("No Most Adverse or Most Favorable cells found; proportion plot skipped")
 }
+```
+
+![](gse111672-single-cell_files/figure-html/proportion-by-sample-celltype-1.png)
+
+``` r
 report_timing("Proportion plot GSE111672", t0)
 ```
+
+    ## [Proportion plot GSE111672] Runtime: 1.60 s | Memory: -
 
 ------------------------------------------------------------------------
 
@@ -383,6 +431,9 @@ if (!is.null(seurat2)) {
 }
 ```
 
+    ## [1] "orig.ident"      "nCount_RNA"      "nFeature_RNA"    "RNA_snn_res.0.6"
+    ## [5] "seurat_clusters" "Database"
+
 ### Score cells (CRA001160)
 
 ``` r
@@ -400,6 +451,15 @@ if (!is.null(seurat2)) {
   report_timing("Score CRA001160", t0, seurat2)
 }
 ```
+
+    ## Detected input type: seurat
+
+    ## 614 genes used for scoring against PancreaticCalculating scores...
+    ## Completed scoring for Pancreatic
+
+    ## Added 1 score column(s) to Seurat metadata
+
+    ## [Score CRA001160] Runtime: 0.11 s | Memory: 3.9 Mb
 
 ### Score by cell type (CRA001160)
 
@@ -436,6 +496,10 @@ report_timing("Cell type plot CRA001160", t0)
 }
 ```
 
+![](gse111672-single-cell_files/figure-html/score-by-celltype-cra001160-1.png)
+
+    ## [Cell type plot CRA001160] Runtime: 0.22 s | Memory: -
+
 ### Prognostic markers (CRA001160)
 
 ``` r
@@ -465,6 +529,10 @@ if (!is.na(group_col2)) {
 report_timing("Marker analysis CRA001160", t0)
 }
 ```
+
+    ## Using Seurat FindMarkers: Most Adverse n=20, Most Favorable n=20
+
+    ## [Marker analysis CRA001160] Runtime: 0.65 s | Memory: -
 
 ### Marker heatmap (CRA001160)
 
@@ -565,6 +633,10 @@ report_timing("Heatmap CRA001160", t0)
 }
 ```
 
+![](gse111672-single-cell_files/figure-html/heatmap-markers-cra001160-1.png)
+
+    ## [Heatmap CRA001160] Runtime: 0.10 s | Memory: -
+
 ### Proportion by sample and cell type (CRA001160)
 
 ``` r
@@ -611,6 +683,10 @@ report_timing("Proportion plot CRA001160", t0)
 }
 ```
 
+![](gse111672-single-cell_files/figure-html/proportion-by-sample-celltype-cra001160-1.png)
+
+    ## [Proportion plot CRA001160] Runtime: 0.22 s | Memory: -
+
 ------------------------------------------------------------------------
 
 ## References
@@ -642,3 +718,71 @@ report_timing("Proportion plot CRA001160", t0)
 ``` r
 sessionInfo()
 ```
+
+    ## R version 4.5.3 (2026-03-11)
+    ## Platform: x86_64-pc-linux-gnu
+    ## Running under: Ubuntu 24.04.3 LTS
+    ## 
+    ## Matrix products: default
+    ## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+    ## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+    ## 
+    ## locale:
+    ##  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
+    ##  [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   
+    ##  [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          
+    ## [10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   
+    ## 
+    ## time zone: UTC
+    ## tzcode source: system (glibc)
+    ## 
+    ## attached base packages:
+    ## [1] stats     graphics  grDevices utils     datasets  methods   base     
+    ## 
+    ## other attached packages:
+    ## [1] ggplot2_4.0.2      Seurat_5.4.0       SeuratObject_5.3.0 sp_2.2-1          
+    ## [5] PhenoMapR_0.1.0   
+    ## 
+    ## loaded via a namespace (and not attached):
+    ##   [1] deldir_2.0-4           pbapply_1.7-4          gridExtra_2.3         
+    ##   [4] rematch2_2.1.2         rlang_1.1.7            magrittr_2.0.4        
+    ##   [7] RcppAnnoy_0.0.23       otel_0.2.0             spatstat.geom_3.7-0   
+    ##  [10] matrixStats_1.5.0      ggridges_0.5.7         compiler_4.5.3        
+    ##  [13] png_0.1-8              systemfonts_1.3.2      vctrs_0.7.1           
+    ##  [16] reshape2_1.4.5         stringr_1.6.0          pkgconfig_2.0.3       
+    ##  [19] fastmap_1.2.0          labeling_0.4.3         promises_1.5.0        
+    ##  [22] rmarkdown_2.30         ragg_1.5.1             fastSave_0.1.0        
+    ##  [25] purrr_1.2.1            xfun_0.56              cachem_1.1.0          
+    ##  [28] jsonlite_2.0.0         goftest_1.2-3          later_1.4.8           
+    ##  [31] spatstat.utils_3.2-2   irlba_2.3.7            parallel_4.5.3        
+    ##  [34] cluster_2.1.8.2        R6_2.6.1               ica_1.0-3             
+    ##  [37] spatstat.data_3.1-9    bslib_0.10.0           stringi_1.8.7         
+    ##  [40] RColorBrewer_1.1-3     reticulate_1.45.0      spatstat.univar_3.1-6 
+    ##  [43] parallelly_1.46.1      lmtest_0.9-40          jquerylib_0.1.4       
+    ##  [46] scattermore_1.2        Rcpp_1.1.1             knitr_1.51            
+    ##  [49] tensor_1.5.1           future.apply_1.20.2    zoo_1.8-15            
+    ##  [52] sctransform_0.4.3      httpuv_1.6.16          Matrix_1.7-4          
+    ##  [55] splines_4.5.3          igraph_2.2.2           tidyselect_1.2.1      
+    ##  [58] abind_1.4-8            yaml_2.3.12            spatstat.random_3.4-4 
+    ##  [61] spatstat.explore_3.7-0 codetools_0.2-20       miniUI_0.1.2          
+    ##  [64] listenv_0.10.1         lattice_0.22-9         tibble_3.3.1          
+    ##  [67] plyr_1.8.9             withr_3.0.2            shiny_1.13.0          
+    ##  [70] S7_0.2.1               ROCR_1.0-12            evaluate_1.0.5        
+    ##  [73] Rtsne_0.17             future_1.69.0          fastDummies_1.7.5     
+    ##  [76] desc_1.4.3             survival_3.8-6         polyclip_1.10-7       
+    ##  [79] fitdistrplus_1.2-6     pillar_1.11.1          KernSmooth_2.23-26    
+    ##  [82] plotly_4.12.0          generics_0.1.4         RcppHNSW_0.6.0        
+    ##  [85] paletteer_1.7.0        scales_1.4.0           globals_0.19.0        
+    ##  [88] xtable_1.8-8           glue_1.8.0             pheatmap_1.0.13       
+    ##  [91] lazyeval_0.2.2         tools_4.5.3            data.table_1.18.2.1   
+    ##  [94] RSpectra_0.16-2        RANN_2.6.2             fs_1.6.7              
+    ##  [97] dotCall64_1.2          cowplot_1.2.0          grid_4.5.3            
+    ## [100] tidyr_1.3.2            nlme_3.1-168           patchwork_1.3.2       
+    ## [103] presto_1.0.0           cli_3.6.5              spatstat.sparse_3.1-0 
+    ## [106] textshaping_1.0.5      spam_2.11-3            viridisLite_0.4.3     
+    ## [109] dplyr_1.2.0            uwot_0.2.4             gtable_0.3.6          
+    ## [112] sass_0.4.10            digest_0.6.39          prismatic_1.1.2       
+    ## [115] progressr_0.18.0       ggrepel_0.9.7          htmlwidgets_1.6.4     
+    ## [118] farver_2.1.2           htmltools_0.5.9        pkgdown_2.2.0         
+    ## [121] lifecycle_1.0.5        httr_1.4.8             mime_0.13             
+    ## [124] MASS_7.3-65

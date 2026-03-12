@@ -52,7 +52,7 @@ sample-level PhenoMapR score can be generated using the pseudobulk
 argument.
 
 **[`PhenoMap()`](https://brooksbenard.github.io/PhenoMapR/reference/PhenoMap.md)
-arguments**
+arguments:**
 
 | Argument           | Description                                               |
 |--------------------|-----------------------------------------------------------|
@@ -65,6 +65,8 @@ arguments**
 | **assay**          | Assay name for Seurat/SCE objects                         |
 | **slot**           | Seurat slot (“data”, “counts”, “scale.data”)              |
 | **verbose**        | Print progress messages                                   |
+
+For the simplest use case of PhenoMapR, impliment the following:
 
 ``` r
 # Load PhenoMapR in your R session using:
@@ -92,7 +94,7 @@ scores <- PhenoMap(
 Each input type is summarized below; expand a section to see example
 code.
 
-**1. Matrix/Data.frame**
+**Matrix/Data.frame**
 
 Expression matrix: genes (rows) x samples/cells (columns).
 
@@ -104,7 +106,7 @@ colnames(expression_matrix) <- cell_names
 scores <- PhenoMap(expression_matrix, reference = "precog", cancer_type = "BRCA")
 ```
 
-**2. Seurat Objects**
+**Seurat Objects**
 
 Single-cell and spatial Seurat objects; use `assay` and `slot` to match
 your data.
@@ -134,7 +136,7 @@ scores <- PhenoMap(
 )
 ```
 
-**3. SingleCellExperiment**
+**SingleCellExperiment Objects**
 
 Use the assay name that holds your (e.g. log-normalized) expression.
 
@@ -152,7 +154,7 @@ scores <- PhenoMap(
 sce_obj <- add_scores_to_sce(sce_obj, scores)
 ```
 
-**4. AnnData (Python)**
+**AnnData Objects**
 
 PhenoMapR can score AnnData objects via `reticulate` (e.g. from Scanpy).
 
@@ -170,20 +172,13 @@ scores <- PhenoMap(
 
 ## Built-in Reference Datasets
 
-Prognostic meta-z scores and cancer-type labels in PhenoMapR are sourced
-from **PRECOG 2.0** ([Benard et al., *Nucleic Acids Research*
+Prognostic meta-z scores for adult, pediatric, and immunotherapy
+references in PhenoMapR are sourced from **PRECOG 2.0** ([Benard et al.,
+*Nucleic Acids Research*
 2026](https://academic.oup.com/nar/article/54/D1/D1579/8324954)).
-Additional citations for the underlying data and methods:
-
-- **PRECOG / TCGA (pan-cancer meta-z and TCGA z-scores)**: [Gentles et
-  al., *Nature Medicine* 2015](https://www.nature.com/articles/nm.3909)
-  — The prognostic landscape of genes and infiltrating immune cells
-  across human cancers.
-- **Pediatric PRECOG**: [Stahl et al., *Cancers*
-  2021](https://www.mdpi.com/2072-6694/13/4/854).
 
 **Reference coverage** — Cancer types available for scoring in each
-built-in database (Adult PRECOG, Pediatric PRECOG, TCGA, ICI PRECOG).
+built-in database (TCGA, Adult PRECOG, Pediatric PRECOG, ICI PRECOG).
 Use `list_cancer_types("precog")` (or `"tcga"`, `"pediatric_precog"`,
 `"ici_precog"`) to see labels for your reference of choice.
 
@@ -235,6 +230,11 @@ broad functionality that can be applied outside of cancer.
 
 ### Custom Reference Data
 
+Maybe you have a specific gene signature or pre-computed z-score
+phenotype reference you would like to score against. Simply upload your
+custom reference signature (rownames are HUGO IDs and columns are
+z-scores).
+
 ``` r
 # Create custom z-score reference
 custom_ref <- data.frame(
@@ -252,9 +252,12 @@ scores <- PhenoMap(
 ### Derive reference from bulk expression and phenotype
 
 If you have bulk expression (samples × genes) and a phenotype
-(e.g. response R/NR, survival, or continuous), you can derive gene-level
-z-scores and use them as the reference for scoring single-cell or
-spatial data. The function cleans gene names to HUGO symbols,
+(e.g. clinical response (R/NR), time-to-survival (with censor), or any
+other continuous phenotype, the PhenoMapR
+**[`derive_reference_from_bulk()`](https://brooksbenard.github.io/PhenoMapR/reference/derive_reference_from_bulk.md)**
+function allows you to derive gene-level z-scores and use them as the
+reference for scoring bulk, single-cell, or spatial input data. The
+function cleans gene names to currently approved HUGO symbols,
 checks/normalizes expression, then computes association z-scores (Cox
 for survival, logistic regression for binary, correlation for
 continuous).
@@ -286,6 +289,18 @@ for HUGO symbol cleaning and `survival` for Cox models.
 
 ### Pseudobulk Aggregation
 
+Many single-cell and spatial datasets include multiple samples. It is
+fair to assume that the cell/spot score distribution might be heavily
+weighted by the sample from which they came. To rank samples in a
+dataset based on their overall phenotype score, setting
+**`pseudobulk = TRUE`** and selecting the sample/patient metadata label
+will perform pseudobulking of cells/spots and perform the
+\*\*`PhenoMap()**` function on the aggregate expression profile of each
+sample in the dataset. This may help identify if the most phenotypically
+relevant cells/spots in the dataset are enriched in samples with a
+phenotype skew (e.g. more adverse cells being enriched in more adversely
+prognostic patients).
+
 ``` r
 # Aggregate single cells by patient before scoring
 scores <- PhenoMap(
@@ -298,6 +313,12 @@ scores <- PhenoMap(
 ```
 
 ### Normalize Scores
+
+The weighted-sum scoring approach generates absolute values as output.
+The
+**[`normalize_scores()`](https://brooksbenard.github.io/PhenoMapR/reference/normalize_scores.md)**
+function converts scores to a z-score for sample-level relative
+comparisons.
 
 ``` r
 scores_df <- PhenoMap(...)

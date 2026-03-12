@@ -36,7 +36,9 @@ report_timing <- function(step_name, t0, obj = NULL) {
 }
 
 # Vignette data: local paths, then Google Drive (https://drive.google.com/drive/folders/1rKGZBX7sa_Iq8AJb1wcxiRc3oD6v6B5n)
-rds_path <- "vignettes/HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed.rds"
+spatial_subset <- system.file("extdata/vignette_subsets/HT270P1_processed_subset.rds", package = "PhenoMapR")
+use_subset <- nzchar(Sys.getenv("CI", "")) || nzchar(Sys.getenv("PKGDOWN_DEV_MODE", ""))
+rds_path <- if (use_subset && file.exists(spatial_subset)) spatial_subset else "vignettes/HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed.rds"
 if (!file.exists(rds_path)) rds_path <- "Vignettes/HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed.rds"
 if (!file.exists(rds_path)) rds_path <- "HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed.rds"
 if (!file.exists(rds_path) && !nzchar(Sys.getenv("CI", "")) && requireNamespace("googledrive", quietly = TRUE)) {
@@ -70,7 +72,8 @@ if (!has_data) {
 }
 ```
 
-    ## HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed.rds not found. See Vignettes/README.md for data instructions.
+    ## [1] "orig.ident"           "nCount_Spatial"       "nFeature_Spatial"    
+    ## [4] "Row.names"            "Cell"                 "precog_score_pearson"
 
 ## Score spots with PRECOG Pancreatic
 
@@ -93,6 +96,9 @@ score_col <- grep("weighted_sum_score", names(scores_spatial), value = TRUE)[1]
 summary(seurat@meta.data[[score_col]])
 ```
 
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ## -63.235 -13.566  -2.528  -1.761   9.433  85.550
+
 ## Score distribution
 
 Distribution of PhenoMapR (PRECOG Pancreatic) scores across spots.
@@ -104,6 +110,8 @@ plot_score_distribution(
   base_size = 14
 )
 ```
+
+![](spatial-transcriptomics_files/figure-html/score-distribution-1.png)
 
 ## Score by cell type or cluster (if available)
 
@@ -234,6 +242,8 @@ if (n_levels >= 2L && n_levels <= 100L) {
 }
 ```
 
+    ## Single or too many annotation levels (1); skipping boxplot.
+
 ## Define prognostic groups
 
 Label spots as Most Adverse (top 5%), Most Favorable (bottom 5%), or
@@ -248,6 +258,10 @@ group_col <- paste0("prognostic_group_", score_col)
 if (!group_col %in% names(seurat@meta.data)) group_col <- grep("prognostic_group", names(seurat@meta.data), value = TRUE)[1]
 table(seurat@meta.data[[group_col]], useNA = "ifany")
 ```
+
+    ## 
+    ##   Most Adverse Most Favorable          Other 
+    ##             15             15            270
 
 ## Spatial plots: where do PhenoMapR scores localize?
 
@@ -406,6 +420,8 @@ if (exists("has_spatial_coords") && has_spatial_coords) {
 }
 ```
 
+![](spatial-transcriptomics_files/figure-html/spatial-score-1.png)
+
 ### Where 5th percentile cells are
 
 Spatial map of prognostic groups: top 5% (Most Adverse), bottom 5% (Most
@@ -439,6 +455,8 @@ if (exists("has_spatial_coords") && has_spatial_coords && !is.null(group_col)) {
   print(p2)
 }
 ```
+
+![](spatial-transcriptomics_files/figure-html/spatial-group-1.png)
 
 ## Prognostic markers
 
@@ -494,6 +512,24 @@ if (!is.null(group_col)) {
   }
 }
 ```
+
+    ## Adverse markers (top 5):
+
+    ##          p_val avg_log2FC pct_in_group pct_rest gene        p_adj
+    ## 1 7.098332e-10  11.319586        0.133    0.000  AK5 1.064750e-06
+    ## 2 1.639154e-08   4.340578        0.200    0.007  SRM 2.458731e-05
+    ## 3 1.038395e-07   2.416833        0.467    0.063 ECE1 1.557593e-04
+    ## 4 1.005341e-06   3.997894        0.133    0.004  FGR 1.508012e-03
+    ## 5 1.005341e-06   4.541735        0.133    0.004 NCDN 1.508012e-03
+
+    ## Favorable markers (top 5):
+
+    ##          p_val avg_log2FC pct_in_group pct_rest       gene        p_adj
+    ## 1 4.142870e-07   2.962251        0.200    0.011 AL356488.2 0.0006214304
+    ## 2 9.186476e-07   4.781275        0.133    0.004       ROR1 0.0013779713
+    ## 3 1.005341e-06   3.611003        0.133    0.004      NBPF1 0.0015080122
+    ## 4 3.925661e-05   1.663949        0.133    0.007       RHOC 0.0588849122
+    ## 5 1.082102e-04   1.609730        0.533    0.137     TMEM59 0.1623153249
 
 ### Step 2: Heatmap of adverse vs. favorable markers
 
@@ -625,6 +661,8 @@ if (exists("markers") && !is.null(markers)) {
 }
 ```
 
+![](spatial-transcriptomics_files/figure-html/heatmap-markers-spatial-1.png)
+
 ### Stacked barplot: adverse vs. favorable by cell type
 
 Each column is a cell type; the height is filled by the number of
@@ -687,6 +725,8 @@ if (!is.null(group_col)) {
 }
 ```
 
+![](spatial-transcriptomics_files/figure-html/stacked-bar-adverse-favorable-by-celltype-1.png)
+
 ### Step 3: Unique markers for adverse/favorable cell types
 
 For each combination of prognostic group and cell type (e.g. adverse
@@ -697,6 +737,11 @@ in that group vs. all other spots.
 markers_by_ct <- NULL
 ct_col_markers <- NULL
 cat("Step 3: Finding unique markers for adverse/favorable cell types...\n")
+```
+
+    ## Step 3: Finding unique markers for adverse/favorable cell types...
+
+``` r
 if (is.null(group_col)) {
   cat("Skipping: prognostic groups not defined (group_col is NULL).\n")
 } else {
@@ -813,10 +858,27 @@ if (is.null(group_col)) {
 }
 ```
 
+    ## Using cell type column: CellType 
+    ## Groups with >= 10  cells: Adverse_CD8T, Favorable_CD8T 
+    ## Using assay for FindAllMarkers: Spatial (full object, ncol= 300 )
+
+    ## No markers with min.pct=0.05, logfc.threshold=0.1, return.thresh=0.05; retrying with relaxed thresholds...
+
+    ## Retrying with return.thresh=1 (return all genes regardless of p-value)...
+
+    ## FindAllMarkers returned 0 marker genes.
+    ## Diagnostic: cells per group: Adverse_CD8T = 15, Favorable_CD8T = 15, Other = 270 
+    ## Diagnostic: assay Spatial
+
 ### Step 4: Heatmap of cell-type-specific markers
 
 ``` r
 cat("Step 4: Heatmap of cell-type-specific markers...\n")
+```
+
+    ## Step 4: Heatmap of cell-type-specific markers...
+
+``` r
 if (exists("markers_by_ct") && !is.null(markers_by_ct) && nrow(markers_by_ct) > 0 && exists("ct_col_markers") && !is.null(ct_col_markers)) {
   suppressPackageStartupMessages(library(dplyr))
   n_top_per_group <- 5
@@ -893,6 +955,8 @@ if (exists("markers_by_ct") && !is.null(markers_by_ct) && nrow(markers_by_ct) > 
 }
 ```
 
+    ## Skipping heatmap: no cell-type-specific markers found in Step 3.
+
 ## Summary
 
 - **Data**: Processed spatial object
@@ -918,3 +982,70 @@ if (exists("markers_by_ct") && !is.null(markers_by_ct) && nrow(markers_by_ct) > 
 ``` r
 sessionInfo()
 ```
+
+    ## R version 4.5.3 (2026-03-11)
+    ## Platform: x86_64-pc-linux-gnu
+    ## Running under: Ubuntu 24.04.3 LTS
+    ## 
+    ## Matrix products: default
+    ## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+    ## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+    ## 
+    ## locale:
+    ##  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
+    ##  [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   
+    ##  [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          
+    ## [10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   
+    ## 
+    ## time zone: UTC
+    ## tzcode source: system (glibc)
+    ## 
+    ## attached base packages:
+    ## [1] stats     graphics  grDevices utils     datasets  methods   base     
+    ## 
+    ## other attached packages:
+    ## [1] dplyr_1.2.0        ggplot2_4.0.2      Seurat_5.4.0       SeuratObject_5.3.0
+    ## [5] sp_2.2-1           PhenoMapR_0.1.0   
+    ## 
+    ## loaded via a namespace (and not attached):
+    ##   [1] deldir_2.0-4           pbapply_1.7-4          gridExtra_2.3         
+    ##   [4] rematch2_2.1.2         rlang_1.1.7            magrittr_2.0.4        
+    ##   [7] RcppAnnoy_0.0.23       otel_0.2.0             spatstat.geom_3.7-0   
+    ##  [10] matrixStats_1.5.0      ggridges_0.5.7         compiler_4.5.3        
+    ##  [13] png_0.1-8              systemfonts_1.3.2      vctrs_0.7.1           
+    ##  [16] reshape2_1.4.5         stringr_1.6.0          pkgconfig_2.0.3       
+    ##  [19] fastmap_1.2.0          labeling_0.4.3         promises_1.5.0        
+    ##  [22] rmarkdown_2.30         ragg_1.5.1             fastSave_0.1.0        
+    ##  [25] purrr_1.2.1            xfun_0.56              cachem_1.1.0          
+    ##  [28] jsonlite_2.0.0         goftest_1.2-3          later_1.4.8           
+    ##  [31] spatstat.utils_3.2-2   irlba_2.3.7            parallel_4.5.3        
+    ##  [34] cluster_2.1.8.2        R6_2.6.1               ica_1.0-3             
+    ##  [37] spatstat.data_3.1-9    bslib_0.10.0           stringi_1.8.7         
+    ##  [40] RColorBrewer_1.1-3     reticulate_1.45.0      spatstat.univar_3.1-6 
+    ##  [43] parallelly_1.46.1      lmtest_0.9-40          jquerylib_0.1.4       
+    ##  [46] scattermore_1.2        Rcpp_1.1.1             knitr_1.51            
+    ##  [49] tensor_1.5.1           future.apply_1.20.2    zoo_1.8-15            
+    ##  [52] sctransform_0.4.3      httpuv_1.6.16          Matrix_1.7-4          
+    ##  [55] splines_4.5.3          igraph_2.2.2           tidyselect_1.2.1      
+    ##  [58] abind_1.4-8            yaml_2.3.12            spatstat.random_3.4-4 
+    ##  [61] spatstat.explore_3.7-0 codetools_0.2-20       miniUI_0.1.2          
+    ##  [64] listenv_0.10.1         lattice_0.22-9         tibble_3.3.1          
+    ##  [67] plyr_1.8.9             withr_3.0.2            shiny_1.13.0          
+    ##  [70] S7_0.2.1               ROCR_1.0-12            evaluate_1.0.5        
+    ##  [73] Rtsne_0.17             future_1.69.0          fastDummies_1.7.5     
+    ##  [76] desc_1.4.3             survival_3.8-6         polyclip_1.10-7       
+    ##  [79] fitdistrplus_1.2-6     pillar_1.11.1          KernSmooth_2.23-26    
+    ##  [82] plotly_4.12.0          generics_0.1.4         RcppHNSW_0.6.0        
+    ##  [85] paletteer_1.7.0        scales_1.4.0           globals_0.19.0        
+    ##  [88] xtable_1.8-8           glue_1.8.0             pheatmap_1.0.13       
+    ##  [91] lazyeval_0.2.2         tools_4.5.3            data.table_1.18.2.1   
+    ##  [94] RSpectra_0.16-2        RANN_2.6.2             fs_1.6.7              
+    ##  [97] dotCall64_1.2          cowplot_1.2.0          grid_4.5.3            
+    ## [100] tidyr_1.3.2            nlme_3.1-168           patchwork_1.3.2       
+    ## [103] presto_1.0.0           cli_3.6.5              spatstat.sparse_3.1-0 
+    ## [106] textshaping_1.0.5      spam_2.11-3            viridisLite_0.4.3     
+    ## [109] uwot_0.2.4             gtable_0.3.6           sass_0.4.10           
+    ## [112] digest_0.6.39          prismatic_1.1.2        progressr_0.18.0      
+    ## [115] ggrepel_0.9.7          htmlwidgets_1.6.4      farver_2.1.2          
+    ## [118] htmltools_0.5.9        pkgdown_2.2.0          lifecycle_1.0.5       
+    ## [121] httr_1.4.8             mime_0.13              MASS_7.3-65

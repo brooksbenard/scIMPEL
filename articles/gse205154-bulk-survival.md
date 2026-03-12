@@ -297,7 +297,7 @@ sample groupings.
 sessionInfo()
 ```
 
-    ## R version 4.5.2 (2025-10-31)
+    ## R version 4.5.3 (2026-03-11)
     ## Platform: x86_64-pc-linux-gnu
     ## Running under: Ubuntu 24.04.3 LTS
     ## 
@@ -318,22 +318,22 @@ sessionInfo()
     ## [1] stats     graphics  grDevices utils     datasets  methods   base     
     ## 
     ## other attached packages:
-    ## [1] survminer_0.5.2 ggpubr_0.6.3    survival_3.8-3  ggplot2_4.0.2  
+    ## [1] survminer_0.5.2 ggpubr_0.6.3    survival_3.8-6  ggplot2_4.0.2  
     ## [5] PhenoMapR_0.1.0
     ## 
     ## loaded via a namespace (and not attached):
     ##  [1] sass_0.4.10        generics_0.1.4     tidyr_1.3.2        rstatix_0.7.3     
-    ##  [5] lattice_0.22-7     digest_0.6.39      magrittr_2.0.4     evaluate_1.0.5    
-    ##  [9] grid_4.5.2         RColorBrewer_1.1-3 fastmap_1.2.0      jsonlite_2.0.0    
+    ##  [5] lattice_0.22-9     digest_0.6.39      magrittr_2.0.4     evaluate_1.0.5    
+    ##  [9] grid_4.5.3         RColorBrewer_1.1-3 fastmap_1.2.0      jsonlite_2.0.0    
     ## [13] Matrix_1.7-4       backports_1.5.0    Formula_1.2-5      gridExtra_2.3     
     ## [17] purrr_1.2.1        scales_1.4.0       textshaping_1.0.5  jquerylib_0.1.4   
-    ## [21] abind_1.4-8        cli_3.6.5          rlang_1.1.7        splines_4.5.2     
+    ## [21] abind_1.4-8        cli_3.6.5          rlang_1.1.7        splines_4.5.3     
     ## [25] withr_3.0.2        cachem_1.1.0       yaml_2.3.12        otel_0.2.0        
-    ## [29] tools_4.5.2        ggsignif_0.6.4     dplyr_1.2.0        broom_1.0.12      
+    ## [29] tools_4.5.3        ggsignif_0.6.4     dplyr_1.2.0        broom_1.0.12      
     ## [33] vctrs_0.7.1        R6_2.6.1           lifecycle_1.0.5    fs_1.6.7          
     ## [37] car_3.1-5          htmlwidgets_1.6.4  ragg_1.5.1         pkgconfig_2.0.3   
     ## [41] desc_1.4.3         pkgdown_2.2.0      pillar_1.11.1      bslib_0.10.0      
     ## [45] gtable_0.3.6       glue_1.8.0         systemfonts_1.3.2  xfun_0.56         
     ## [49] tibble_3.3.1       tidyselect_1.2.1   knitr_1.51         farver_2.1.2      
     ## [53] htmltools_0.5.9    carData_3.0-6      rmarkdown_2.30     labeling_0.4.3    
-    ## [57] compiler_4.5.2     S7_0.2.1
+    ## [57] compiler_4.5.3     S7_0.2.1

@@ -680,7 +680,7 @@ message("Metastatic — Log-rank p-value: ", round(1 - pchisq(lr_met$chisq, 1), 
 sessionInfo()
 ```
 
-    ## R version 4.5.2 (2025-10-31)
+    ## R version 4.5.3 (2026-03-11)
     ## Platform: x86_64-pc-linux-gnu
     ## Running under: Ubuntu 24.04.3 LTS
     ## 
@@ -701,21 +701,21 @@ sessionInfo()
     ## [1] stats     graphics  grDevices utils     datasets  methods   base     
     ## 
     ## other attached packages:
-    ## [1] survival_3.8-3  PhenoMapR_0.1.0
+    ## [1] survival_3.8-6  PhenoMapR_0.1.0
     ## 
     ## loaded via a namespace (and not attached):
     ##  [1] Matrix_1.7-4          jsonlite_2.0.0        dplyr_1.2.0          
-    ##  [4] compiler_4.5.2        tidyselect_1.2.1      jquerylib_0.1.4      
-    ##  [7] splines_4.5.2         systemfonts_1.3.2     textshaping_1.0.5    
-    ## [10] yaml_2.3.12           fastmap_1.2.0         lattice_0.22-7       
+    ##  [4] compiler_4.5.3        tidyselect_1.2.1      jquerylib_0.1.4      
+    ##  [7] splines_4.5.3         systemfonts_1.3.2     textshaping_1.0.5    
+    ## [10] yaml_2.3.12           fastmap_1.2.0         lattice_0.22-9       
     ## [13] R6_2.6.1              generics_0.1.4        knitr_1.51           
     ## [16] htmlwidgets_1.6.4     tibble_3.3.1          desc_1.4.3           
     ## [19] bslib_0.10.0          pillar_1.11.1         rlang_1.1.7          
     ## [22] cachem_1.1.0          splitstackshape_1.4.8 xfun_0.56            
     ## [25] fs_1.6.7              sass_0.4.10           otel_0.2.0           
     ## [28] cli_3.6.5             pkgdown_2.2.0         magrittr_2.0.4       
-    ## [31] digest_0.6.39         grid_4.5.2            lifecycle_1.0.5      
+    ## [31] digest_0.6.39         grid_4.5.3            lifecycle_1.0.5      
     ## [34] vctrs_0.7.1           evaluate_1.0.5        glue_1.8.0           
     ## [37] data.table_1.18.2.1   HGNChelper_0.8.15     ragg_1.5.1           
-    ## [40] rmarkdown_2.30        tools_4.5.2           pkgconfig_2.0.3      
+    ## [40] rmarkdown_2.30        tools_4.5.3           pkgconfig_2.0.3      
     ## [43] htmltools_0.5.9
