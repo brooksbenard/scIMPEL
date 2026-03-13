@@ -79,23 +79,27 @@
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p>This vignette demonstrates using PhenoMapR on single-cell pancreatic
-adenocarcinoma (PAAD) data from <strong>CRA001160</strong>
-(GSA/CNCB-NGDC). We load expression and cell metadata from Google Drive,
-score cells with both <strong>TCGA</strong> and <strong>PRECOG</strong>
-Pancreatic meta-z scores, compare the two references, then define
-prognostic groups, identify marker genes, and visualize proportions by
-sample and cell type using the original cell type annotations from the
-metadata file.</p>
+<p>This vignette demonstrates using PhenoMapR on a single-cell RNA-seq
+dataset. Here, we chose to highlight a pancreatic adenocarcinoma (PAAD)
+dataset from Peng et al. (<em>Cell Research</em> 2019; CRA001160) due to
+it’s broad cell type representation, sample number, and inclusion of
+normal controls. Pre-processed expression and metadata were obtained
+from <a href="https://tisch.compbio.cn/home/" class="external-link">TISCH2</a>. We score cells
+with both <strong>TCGA PAAD</strong> and <strong>PRECOG
+Pancreatic</strong> meta-z scores, compare results between the two
+references, then define prognostic groups, identify marker genes, and
+visualize proportions by sample and cell type using the original cell
+type annotations from the metadata file. Finally, we compare our results
+with those of <a href="https://www.nature.com/articles/s41467-025-66162-4/figures/2" class="external-link">Jolasun
+et al.</a> using their method <strong>[SIDISH]</strong>(<a href="https://www.nature.com/articles/s41467-025-66162-4" class="external-link uri">https://www.nature.com/articles/s41467-025-66162-4</a>) on
+the same dataset.</p>
 </div>
 <div class="section level2">
 <h2 id="cra001160-load-data-from-google-drive">CRA001160: Load data from Google Drive<a class="anchor" aria-label="anchor" href="#cra001160-load-data-from-google-drive"></a>
 </h2>
-<p><strong>CRA001160</strong> is a single-cell RNA-seq dataset of
-pancreatic ductal adenocarcinoma from Peng et al. (<em>Cell
-Research</em> 2019). We download the expression matrix (10X H5) and cell
-metadata (TSV) from Google Drive, then build a Seurat object for scoring
-and visualization.</p>
+<p>We download the expression matrix (10X H5) and cell metadata (TSV)
+from Google Drive, then build a Seurat object for scoring and
+visualization.</p>
 <div class="section level3">
 <h3 id="download-and-load">Download and load<a class="anchor" aria-label="anchor" href="#download-and-load"></a>
 </h3>
@@ -117,24 +121,16 @@ and visualization.</p>
 <span><span class="va">vignette_dir</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.exists</a></span><span class="op">(</span><span class="st">"vignettes"</span><span class="op">)</span><span class="op">)</span> <span class="st">"vignettes"</span> <span class="kw">else</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.exists</a></span><span class="op">(</span><span class="st">"Vignettes"</span><span class="op">)</span><span class="op">)</span> <span class="st">"Vignettes"</span> <span class="kw">else</span> <span class="st">"."</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.exists</a></span><span class="op">(</span><span class="va">vignette_dir</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">vignette_dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>googledrive_quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_deauth.html" class="external-link">drive_deauth</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co"># Expression matrix (10X H5)</span></span>
 <span><span class="va">path_h5</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">vignette_dir</span>, <span class="st">"PAAD_CRA001160_expression.h5"</span><span class="op">)</span></span>
-<span><span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_download.html" class="external-link">drive_download</a></span><span class="op">(</span><span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_id.html" class="external-link">as_id</a></span><span class="op">(</span><span class="st">"1PolTXggREz8XmhutCLTQJGCfKxFAzqMl"</span><span class="op">)</span>, <span class="va">path_h5</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## File downloaded:</span></span></code></pre>
-<pre><code><span><span class="co">## • <span style="color: #00BBBB;">PAAD_CRA001160_expression.h5</span> <span style="color: #555555;">&lt;id: 1PolTXggREz8XmhutCLTQJGCfKxFAzqMl&gt;</span></span></span></code></pre>
-<pre><code><span><span class="co">## Saved locally as:</span></span></code></pre>
-<pre><code><span><span class="co">## • <span style="color: #0000BB;">./PAAD_CRA001160_expression.h5</span></span></span></code></pre>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Cell metadata</span></span>
+<span><span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_download.html" class="external-link">drive_download</a></span><span class="op">(</span><span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_id.html" class="external-link">as_id</a></span><span class="op">(</span><span class="st">"1PolTXggREz8XmhutCLTQJGCfKxFAzqMl"</span><span class="op">)</span>, <span class="va">path_h5</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co"># Cell metadata</span></span>
 <span><span class="va">path_meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">vignette_dir</span>, <span class="st">"PAAD_CRA001160_CellMetainfo_table.tsv"</span><span class="op">)</span></span>
-<span><span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_download.html" class="external-link">drive_download</a></span><span class="op">(</span><span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_id.html" class="external-link">as_id</a></span><span class="op">(</span><span class="st">"17mqxnKOZJn0jW2iD9RV0wZeWsilAIwdu"</span><span class="op">)</span>, <span class="va">path_meta</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## File downloaded:</span></span></code></pre>
-<pre><code><span><span class="co">## • <span style="color: #00BBBB;">PAAD_CRA001160_CellMetainfo_table.tsv</span> <span style="color: #555555;">&lt;id: 17mqxnKOZJn0jW2iD9RV0wZeWsilAIwdu&gt;</span></span></span></code></pre>
-<pre><code><span><span class="co">## Saved locally as:</span></span></code></pre>
-<pre><code><span><span class="co">## • <span style="color: #0000BB;">./PAAD_CRA001160_CellMetainfo_table.tsv</span></span></span></code></pre>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">has_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">path_h5</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">path_meta</span><span class="op">)</span></span>
+<span><span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_download.html" class="external-link">drive_download</a></span><span class="op">(</span><span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_id.html" class="external-link">as_id</a></span><span class="op">(</span><span class="st">"17mqxnKOZJn0jW2iD9RV0wZeWsilAIwdu"</span><span class="op">)</span>, <span class="va">path_meta</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">has_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">path_h5</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">path_meta</span><span class="op">)</span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/knitr/man/opts_chunk.html" class="external-link">opts_chunk</a></span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>eval <span class="op">=</span> <span class="va">has_data</span><span class="op">)</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="va">has_data</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Could not download CRA001160 expression or metadata from Google Drive."</span><span class="op">)</span></span>
@@ -169,9 +165,11 @@ and visualization.</p>
 <span>    <span class="op">}</span></span>
 <span>  <span class="op">}</span></span>
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">celltype_col</span><span class="op">)</span><span class="op">)</span> <span class="va">celltype_col</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">meta</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span></span>
+<span>  <span class="co"># Original cell type annotation (TISCH2 metadata) when present</span></span>
+<span>  <span class="va">celltype_original_col</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="st">"Celltype (original)"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">meta</span><span class="op">)</span><span class="op">)</span> <span class="st">"Celltype (original)"</span> <span class="kw">else</span> <span class="cn">NULL</span></span>
 <span></span>
 <span>  <span class="co"># Subsample cells for vignette runtime (avoid very large Seurat objects in CI/pkgdown)</span></span>
-<span>  <span class="va">max_cells</span> <span class="op">&lt;-</span> <span class="fl">15000L</span></span>
+<span>  <span class="va">max_cells</span> <span class="op">&lt;-</span> <span class="fl">25000L</span></span>
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">expr_mat</span><span class="op">)</span> <span class="op">&gt;</span> <span class="va">max_cells</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span>    <span class="va">keep_cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">expr_mat</span><span class="op">)</span>, <span class="va">max_cells</span><span class="op">)</span></span>
@@ -194,12 +192,12 @@ and visualization.</p>
 <span>  <span class="fu">report_timing</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Create Seurat"</span>, <span class="kw">if</span> <span class="op">(</span><span class="va">already_norm</span><span class="op">)</span> <span class="st">" (data as-is)"</span> <span class="kw">else</span> <span class="st">" + normalize"</span><span class="op">)</span>, <span class="va">t0</span>, <span class="va">seurat</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Cells: %d | Genes: %d | Cell type column: %s"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">seurat</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">seurat</span><span class="op">)</span>, <span class="va">celltype_col</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<pre><code><span><span class="co">## [Read H5 + metadata] Runtime: 6.67 s | Memory: -</span></span></code></pre>
-<pre><code><span><span class="co">## Subsampled cells from 15000 to 15000 for vignette.</span></span></code></pre>
-<pre><code><span><span class="co">## Warning in .M2v(x): sparse-&gt;dense coercion: allocating vector of size 2.4 GiB</span></span></code></pre>
+<pre><code><span><span class="co">## [Read H5 + metadata] Runtime: 7.42 s | Memory: -</span></span></code></pre>
+<pre><code><span><span class="co">## Subsampled cells from 25000 to 25000 for vignette.</span></span></code></pre>
+<pre><code><span><span class="co">## Warning in .M2v(x): sparse-&gt;dense coercion: allocating vector of size 3.9 GiB</span></span></code></pre>
 <pre><code><span><span class="co">## Data detected as already normalized (e.g. TISCH2); skipped NormalizeData to avoid double normalization.</span></span></code></pre>
-<pre><code><span><span class="co">## [Create Seurat (data as-is)] Runtime: 1.81 s | Memory: 432 Mb</span></span></code></pre>
-<pre><code><span><span class="co">## Cells: 15000 | Genes: 21066 | Cell type column: Celltype (malignancy)</span></span></code></pre>
+<pre><code><span><span class="co">## [Create Seurat (data as-is)] Runtime: 3.93 s | Memory: 717.9 Mb</span></span></code></pre>
+<pre><code><span><span class="co">## Cells: 25000 | Genes: 21066 | Cell type column: Celltype (malignancy)</span></span></code></pre>
 </div>
 </div>
 <div class="section level2">
@@ -208,7 +206,7 @@ and visualization.</p>
 <p>We score each cell using both the <strong>TCGA</strong> (PAAD) and
 <strong>PRECOG</strong> (Pancreatic) meta-z references, then add both
 score columns to the Seurat object.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">t0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Ensure the RNA data layer has gene names (required by PhenoMapR). If the</span></span>
@@ -218,7 +216,7 @@ score columns to the Seurat object.</p>
 <span>  error <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">e</span><span class="op">)</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Warning: Layer 'data' is empty</span></span></code></pre>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">expr_data</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">expr_data</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span> <span class="op">||</span> <span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">expr_data</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">counts_data</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span></span>
 <span>    <span class="fu">Seurat</span><span class="fu">::</span><span class="fu"><a href="https://satijalab.github.io/seurat-object/reference/AssayData.html" class="external-link">GetAssayData</a></span><span class="op">(</span><span class="va">seurat</span>, layer <span class="op">=</span> <span class="st">"counts"</span>, assay <span class="op">=</span> <span class="st">"RNA"</span><span class="op">)</span>,</span>
@@ -241,7 +239,7 @@ score columns to the Seurat object.</p>
 <pre><code><span><span class="co">## Detected input type: seurat</span></span></code></pre>
 <pre><code><span><span class="co">## 4844 genes used for scoring against PAADCalculating scores...</span></span>
 <span><span class="co">## Completed scoring for PAAD</span></span></code></pre>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scores_precog</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PhenoMap.html">PhenoMap</a></span><span class="op">(</span></span>
 <span>  expression <span class="op">=</span> <span class="va">seurat</span>,</span>
 <span>  reference <span class="op">=</span> <span class="st">"precog"</span>,</span>
@@ -253,22 +251,22 @@ score columns to the Seurat object.</p>
 <pre><code><span><span class="co">## Detected input type: seurat</span></span></code></pre>
 <pre><code><span><span class="co">## 6556 genes used for scoring against PancreaticCalculating scores...</span></span>
 <span><span class="co">## Completed scoring for Pancreatic</span></span></code></pre>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seurat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_scores_to_seurat.html">add_scores_to_seurat</a></span><span class="op">(</span><span class="va">seurat</span>, <span class="va">scores_tcga</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Added 1 score column(s) to Seurat metadata</span></span></code></pre>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seurat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_scores_to_seurat.html">add_scores_to_seurat</a></span><span class="op">(</span><span class="va">seurat</span>, <span class="va">scores_precog</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Added 1 score column(s) to Seurat metadata</span></span></code></pre>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">report_timing</span><span class="op">(</span><span class="st">"Score TCGA + PRECOG"</span>, <span class="va">t0</span>, <span class="va">seurat</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [Score TCGA + PRECOG] Runtime: 2.58 s | Memory: 856.2 Mb</span></span></code></pre>
+<pre><code><span><span class="co">## [Score TCGA + PRECOG] Runtime: 4.65 s | Memory: 1423.6 Mb</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="scatterplot-tcga-vs-precog-scores">Scatterplot: TCGA vs PRECOG scores<a class="anchor" aria-label="anchor" href="#scatterplot-tcga-vs-precog-scores"></a>
 </h2>
 <p>Comparison of per-cell scores from the two references. Cells are
 colored by the original cell type from the CellMetainfo file.</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">score_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"weighted_sum_score"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">)</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="va">score_tcga_col</span> <span class="op">&lt;-</span> <span class="va">score_cols</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"PAAD"</span>, <span class="va">score_cols</span>, ignore.case <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
 <span><span class="va">score_precog_col</span> <span class="op">&lt;-</span> <span class="va">score_cols</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"Pancreatic"</span>, <span class="va">score_cols</span>, ignore.case <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
@@ -297,7 +295,7 @@ PRECOG)<a class="anchor" aria-label="anchor" href="#score-distribution-tcga-and-
 <p>Boxplots of score distributions for both references, with cell types
 ordered by median PRECOG score so that the most adverse (high PRECOG)
 cell types appear toward one side.</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Order cell types by median PRECOG score (ascending: favorable left, adverse right)</span></span>
 <span><span class="va">med_precog</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/tapply.html" class="external-link">tapply</a></span><span class="op">(</span><span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">[[</span><span class="va">score_precog_col</span><span class="op">]</span><span class="op">]</span>, <span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">[[</span><span class="va">celltype_col</span><span class="op">]</span><span class="op">]</span>, <span class="va">median</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
@@ -339,13 +337,61 @@ cell types appear toward one side.</p>
 <p><img src="single-cell_files/figure-html/score-distribution-boxplots-1.png" class="r-plt" alt="" width="100%"></p>
 </div>
 <div class="section level2">
+<h2 id="score-distribution-by-celltype-original">Score distribution by Celltype (original)<a class="anchor" aria-label="anchor" href="#score-distribution-by-celltype-original"></a>
+</h2>
+<p>When the metadata includes <strong>Celltype (original)</strong>
+(TISCH2 original annotations), we show the same score distributions
+grouped by that column.</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">celltype_original_col</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="va">celltype_original_col</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">med_precog_orig</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/tapply.html" class="external-link">tapply</a></span><span class="op">(</span><span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">[[</span><span class="va">score_precog_col</span><span class="op">]</span><span class="op">]</span>, <span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">[[</span><span class="va">celltype_original_col</span><span class="op">]</span><span class="op">]</span>, <span class="va">median</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">[[</span><span class="va">celltype_original_col</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="va">med_precog_orig</span> <span class="op">&lt;-</span> <span class="va">med_precog_orig</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">med_precog_orig</span><span class="op">)</span><span class="op">]</span></span>
+<span>  <span class="va">ct_order_orig</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="va">med_precog_orig</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">$</span><span class="va">celltype_original</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">[[</span><span class="va">celltype_original_col</span><span class="op">]</span><span class="op">]</span>, levels <span class="op">=</span> <span class="va">ct_order_orig</span><span class="op">)</span></span>
+<span></span>
+<span>  <span class="va">dl_orig</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>      Reference <span class="op">=</span> <span class="st">"TCGA PAAD"</span>,</span>
+<span>      Score <span class="op">=</span> <span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">[[</span><span class="va">score_tcga_col</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>      Cell_type <span class="op">=</span> <span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">$</span><span class="va">celltype_original</span>,</span>
+<span>      stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>      Reference <span class="op">=</span> <span class="st">"PRECOG Pancreatic"</span>,</span>
+<span>      Score <span class="op">=</span> <span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">[[</span><span class="va">score_precog_col</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>      Cell_type <span class="op">=</span> <span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">$</span><span class="va">celltype_original</span>,</span>
+<span>      stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="va">dl_orig</span><span class="op">$</span><span class="va">Reference</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">dl_orig</span><span class="op">$</span><span class="va">Reference</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TCGA PAAD"</span>, <span class="st">"PRECOG Pancreatic"</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">pal_ct_orig</span> <span class="op">&lt;-</span> <span class="fu">PhenoMapR</span><span class="fu">::</span><span class="fu"><a href="../reference/get_celltype_palette.html">get_celltype_palette</a></span><span class="op">(</span><span class="va">ct_order_orig</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">dl_orig</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Cell_type</span>, y <span class="op">=</span> <span class="va">Score</span>, fill <span class="op">=</span> <span class="va">Cell_type</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_boxplot.html" class="external-link">geom_boxplot</a></span><span class="op">(</span>outlier.alpha <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span> <span class="va">Reference</span>, ncol <span class="op">=</span> <span class="fl">2</span>, scales <span class="op">=</span> <span class="st">"free_y"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_fill_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="va">pal_ct_orig</span>, name <span class="op">=</span> <span class="st">"Celltype (original)"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span>
+<span>      axis.text.x <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">45</span>, hjust <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
+<span>      legend.position <span class="op">=</span> <span class="st">"right"</span>,</span>
+<span>      strip.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
+<span>    <span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Celltype (original)"</span>, y <span class="op">=</span> <span class="st">"PhenoMapR score"</span>, title <span class="op">=</span> <span class="st">"CRA001160: Score by reference and Celltype (original)"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Celltype (original) not in metadata; skipping boxplots by original annotations."</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p><img src="single-cell_files/figure-html/score-distribution-celltype-original-1.png" class="r-plt" alt="" width="100%"></p>
+</div>
+<div class="section level2">
 <h2 id="prognostic-groups-and-marker-genes">Prognostic groups and marker genes<a class="anchor" aria-label="anchor" href="#prognostic-groups-and-marker-genes"></a>
 </h2>
 <p>We define Most Adverse and Most Favorable groups from the
 <strong>PRECOG</strong> score (5th/95th percentiles), then run marker
 identification (adverse vs rest, favorable vs rest) using the original
 cell type annotation for context.</p>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scores_df</span> <span class="op">&lt;-</span> <span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">score_tcga_col</span>, <span class="va">score_precog_col</span><span class="op">)</span>, drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
 <span><span class="va">groups</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define_prognostic_groups.html">define_prognostic_groups</a></span><span class="op">(</span><span class="va">scores_df</span>, percentile <span class="op">=</span> <span class="fl">0.05</span>, score_columns <span class="op">=</span> <span class="va">score_precog_col</span><span class="op">)</span></span>
 <span><span class="va">seurat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.github.io/seurat-object/reference/AddMetaData.html" class="external-link">AddMetaData</a></span><span class="op">(</span><span class="va">seurat</span>, <span class="va">groups</span><span class="op">)</span></span>
@@ -369,23 +415,23 @@ cell type annotation for context.</p>
 <span>  <span class="op">}</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <pre><code><span><span class="co">## Warning in asMethod(object): sparse-&gt;dense coercion: allocating vector of size</span></span>
-<span><span class="co">## 2.4 GiB</span></span></code></pre>
-<pre><code><span><span class="co">## Using Seurat FindMarkers: Most Adverse n=750, Most Favorable n=750</span></span></code></pre>
-<pre><code><span><span class="co">## Subsampled Other from 13500 to 5000 cells (memory limit)</span></span></code></pre>
+<span><span class="co">## 3.9 GiB</span></span></code></pre>
+<pre><code><span><span class="co">## Using Seurat FindMarkers: Most Adverse n=1250, Most Favorable n=1250</span></span></code></pre>
+<pre><code><span><span class="co">## Subsampled Other from 22500 to 5000 cells (memory limit)</span></span></code></pre>
 <pre><code><span><span class="co">## Adverse markers (top 5):</span></span></code></pre>
-<pre><code><span><span class="co">##           p_val avg_log2FC pct_in_group pct_rest  gene         p_adj</span></span>
-<span><span class="co">## 1  0.000000e+00   2.800083        0.813    0.169 LAMB3  0.000000e+00</span></span>
-<span><span class="co">## 2  0.000000e+00   3.149590        0.721    0.132 LAMC2  0.000000e+00</span></span>
-<span><span class="co">## 3  0.000000e+00   3.722591        0.504    0.049 TNNT1  0.000000e+00</span></span>
-<span><span class="co">## 4 7.993982e-321   2.722119        0.769    0.156   SFN 1.684012e-316</span></span>
-<span><span class="co">## 5 1.665001e-320   3.222878        0.509    0.052  GJB3 3.507492e-316</span></span></code></pre>
+<pre><code><span><span class="co">##   p_val avg_log2FC pct_in_group pct_rest     gene p_adj</span></span>
+<span><span class="co">## 1     0   2.916575        0.822    0.158    LAMB3     0</span></span>
+<span><span class="co">## 2     0   2.729147        0.770    0.139      SFN     0</span></span>
+<span><span class="co">## 3     0   2.450000        0.800    0.172   GPRC5A     0</span></span>
+<span><span class="co">## 4     0   2.302042        0.899    0.272   PHLDA2     0</span></span>
+<span><span class="co">## 5     0   1.652242        0.898    0.276 C19orf33     0</span></span></code></pre>
 <pre><code><span><span class="co">## Favorable markers (top 5):</span></span></code></pre>
-<pre><code><span><span class="co">##           p_val avg_log2FC pct_in_group pct_rest     gene         p_adj</span></span>
-<span><span class="co">## 1  0.000000e+00   5.243857        0.367    0.017 SERPINI2  0.000000e+00</span></span>
-<span><span class="co">## 2 5.653099e-320   6.151197        0.447    0.041     CTRL 1.190882e-315</span></span>
-<span><span class="co">## 3 2.097363e-313   5.965051        0.487    0.056   CELA2B 4.418305e-309</span></span>
-<span><span class="co">## 4 2.958333e-282   5.464110        0.325    0.017     AQP8 6.232024e-278</span></span>
-<span><span class="co">## 5 2.061740e-274  -2.816711        0.584    0.963  S100A11 4.343261e-270</span></span></code></pre>
+<pre><code><span><span class="co">##   p_val avg_log2FC pct_in_group pct_rest   gene p_adj</span></span>
+<span><span class="co">## 1     0   6.135377        0.491    0.053 CELA2B     0</span></span>
+<span><span class="co">## 2     0   6.359580        0.454    0.039   CTRL     0</span></span>
+<span><span class="co">## 3     0  -2.492736        0.520    0.917  ANXA2     0</span></span>
+<span><span class="co">## 4     0  -1.911960        0.540    0.932   RAC1     0</span></span>
+<span><span class="co">## 5     0   4.599349        0.411    0.046  PDIA2     0</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="marker-heatmap">Marker heatmap<a class="anchor" aria-label="anchor" href="#marker-heatmap"></a>
@@ -393,7 +439,7 @@ cell type annotation for context.</p>
 <p>Top adverse and favorable marker genes; columns (cells) ordered by
 PRECOG score. Cell type from CellMetainfo is shown in the
 annotation.</p>
-<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">markers</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Markers not available; skipping heatmap."</span><span class="op">)</span></span>
 <span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
@@ -421,9 +467,11 @@ annotation.</p>
 <span>  <span class="va">meta_ord</span> <span class="op">&lt;-</span> <span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">[</span><span class="va">ord</span>, <span class="op">]</span></span>
 <span></span>
 <span>  <span class="va">score_vals</span> <span class="op">&lt;-</span> <span class="va">meta_ord</span><span class="op">[[</span><span class="va">score_precog_col</span><span class="op">]</span><span class="op">]</span></span>
+<span>  <span class="co"># Use Celltype (original) for heatmap annotation when available</span></span>
+<span>  <span class="va">ct_anno_col</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">celltype_original_col</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="va">celltype_original_col</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">meta_ord</span><span class="op">)</span><span class="op">)</span> <span class="va">celltype_original_col</span> <span class="kw">else</span> <span class="va">celltype_col</span></span>
 <span>  <span class="va">ann_col</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>    `PRECOG Score` <span class="op">=</span> <span class="va">score_vals</span>,</span>
-<span>    `Cell type` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">meta_ord</span><span class="op">[[</span><span class="va">celltype_col</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>    `Cell type` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">meta_ord</span><span class="op">[[</span><span class="va">ct_anno_col</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
 <span>    `Prognostic group` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">meta_ord</span><span class="op">[[</span><span class="va">group_col</span><span class="op">]</span><span class="op">]</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Most Adverse"</span>, <span class="st">"Other"</span>, <span class="st">"Most Favorable"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>    check.names <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>  <span class="op">)</span></span>
@@ -468,7 +516,7 @@ annotation.</p>
 <p>Proportion of Most Adverse and Most Favorable cells (defined by
 PRECOG) within each sample and cell type, using the original cell type
 annotation from CellMetainfo.</p>
-<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sample_col</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">cand</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Sample"</span>, <span class="st">"sample"</span>, <span class="st">"Patient"</span>, <span class="st">"patient"</span>, <span class="st">"Sample_ID"</span>, <span class="st">"orig.ident"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="va">cand</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
@@ -514,6 +562,19 @@ annotation from CellMetainfo.</p>
 <p><img src="single-cell_files/figure-html/proportion-by-sample-celltype-1.png" class="r-plt" alt="" width="100%"></p>
 </div>
 <div class="section level2">
+<h2 id="conclusions">Conclusions<a class="anchor" aria-label="anchor" href="#conclusions"></a>
+</h2>
+<p>Here, we demonstrate that using PhenoMapR on single-cell RNAseq data
+in a pancreatic cancer dataset successfully identified cells known to be
+associated with disease (malignant and ductal type 1). These results
+agree with those of Jolasun et al., however our PhenoMapR results
+provide an increased level of granularity compared to other methods,
+since we retain absolute and rank-orderd information regarding all
+cell’s phenotype association. We also nominate those most associated
+with favorable outcomes in PAAD, highlighting potential areas for
+additional therapeutic focus.</p>
+</div>
+<div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
 <ul>
@@ -531,7 +592,7 @@ scores. <em>Nucleic Acids Research</em>. 2026.</p></li>
 <div class="section level2">
 <h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## R version 4.5.3 (2026-03-11)</span></span>
 <span><span class="co">## Platform: x86_64-pc-linux-gnu</span></span>
