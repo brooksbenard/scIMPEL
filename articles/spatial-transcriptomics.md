@@ -1055,7 +1055,7 @@ sessionInfo()
     ## [103] yaml_2.3.12            evaluate_1.0.5         codetools_0.2-20      
     ## [106] tibble_3.3.1           cli_3.6.5              uwot_0.2.4            
     ## [109] xtable_1.8-8           reticulate_1.45.0      systemfonts_1.3.2     
-    ## [112] jquerylib_0.1.4        Rcpp_1.1.1             globals_0.19.0        
+    ## [112] jquerylib_0.1.4        Rcpp_1.1.1             globals_0.19.1        
     ## [115] spatstat.random_3.4-4  png_0.1-8              spatstat.univar_3.1-6 
     ## [118] parallel_4.5.3         pkgdown_2.2.0          presto_1.0.0          
     ## [121] dotCall64_1.2          listenv_0.10.1         viridisLite_0.4.3     
