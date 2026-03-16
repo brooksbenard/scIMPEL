@@ -454,588 +454,25 @@ pheno <- Biobase::pData(gset)
 pheno$geo_accession <- rownames(pheno)
 
 pick_col <- function(df, patterns) {
+  # Match candidate column names by pattern without generating list-matrix objects
+  # (avoids warnings like: "coercing argument of type 'list' to logical").
   cols <- colnames(df)
-  hit <- cols[apply(outer(patterns, cols, Vectorize(grepl, SIMPLIFY = FALSE), ignore.case = TRUE),
-                    2, any)]
-  if (length(hit)) hit[1] else NA_character_
+  for (p in patterns) {
+    hit <- cols[grepl(p, cols, ignore.case = TRUE)]
+    if (length(hit) > 0) return(hit[1])
+  }
+  NA_character_
 }
 
 id_col   <- pick_col(pheno, c("sample", "patient", "id", "accession"))
-```
-
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-
-``` r
 age_col  <- pick_col(pheno, c("age"))
-```
-
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-
-``` r
 sex_col  <- pick_col(pheno, c("sex", "gender"))
-```
-
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-
-``` r
 os_t_col <- pick_col(pheno, c("os_days", "os.time", "os", "overall.survival"))
-```
-
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-
-``` r
 os_e_col <- pick_col(pheno, c("os_censor", "os_event", "os.status", "os_event"))
-```
-
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-
-``` r
 pfs_t_col <- pick_col(pheno, c("pfs_days", "pfs.time", "pfs"))
-```
-
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-
-``` r
 pfs_e_col <- pick_col(pheno, c("pfs_censor", "pfs_event", "pfs.status"))
-```
-
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-
-``` r
 stage_col <- pick_col(pheno, c("stage", "disease", "resectable", "borderline", "locally", "meta"))
-```
 
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-    ## Warning in FUN(newX[, i], ...): coercing argument of type 'list' to logical
-
-``` r
 sample_id <- if (!is.na(id_col)) as.character(pheno[[id_col]]) else pheno$geo_accession
 
 clin <- data.frame(
@@ -1078,7 +515,7 @@ suppressPackageStartupMessages(library(survminer))
 dat_os <- subset(clin, !is.na(OS_Days) & !is.na(OS_Censor) & !is.na(stage_group))
 if (nrow(dat_os) >= 10) {
   fit_os <- survfit(Surv(OS_Days, OS_Censor) ~ stage_group, data = dat_os)
-  ggsurvplot(
+  p <- ggsurvplot(
     fit_os,
     data = dat_os,
     title = "GSE253260: Overall survival by disease stage",
@@ -1087,12 +524,13 @@ if (nrow(dat_os) >= 10) {
     legend.title = "Stage",
     risk.table = FALSE
   )
+  print(p)
 }
 
 dat_pfs <- subset(clin, !is.na(PFS_Days) & !is.na(PFS_Censor) & !is.na(stage_group))
 if (nrow(dat_pfs) >= 10) {
   fit_pfs <- survfit(Surv(PFS_Days, PFS_Censor) ~ stage_group, data = dat_pfs)
-  ggsurvplot(
+  p <- ggsurvplot(
     fit_pfs,
     data = dat_pfs,
     title = "GSE253260: Progression-free survival by disease stage",
@@ -1101,71 +539,65 @@ if (nrow(dat_pfs) >= 10) {
     legend.title = "Stage",
     risk.table = FALSE
   )
+  print(p)
 }
 ```
 
 ``` r
 suppressPackageStartupMessages(library(PhenoMapR))
 
-non_met_idx <- which(clin$stage_group != "Metastatic" & !is.na(clin$stage_group))
-met_idx     <- which(clin$stage_group == "Metastatic")
+if (nrow(clin) == 0) {
+  message("No overlapping samples between expression and clinical metadata for GSE253260; skipping PhenoMap scoring/KM plots.")
+  clin$score_Pancreatic <- numeric(0)
+  clin$score_Pancreatic_Met <- numeric(0)
+} else {
+  non_met_idx <- which(clin$stage_group != "Metastatic" & !is.na(clin$stage_group))
+  met_idx     <- which(clin$stage_group == "Metastatic")
 
-scores_nonmet <- NULL
-scores_met    <- NULL
+  scores_nonmet <- NULL
+  scores_met    <- NULL
 
-if (length(non_met_idx) > 0) {
-  expr_nonmet <- expr_tpm[, non_met_idx, drop = FALSE]
-  scores_nonmet <- PhenoMap(
-    expression  = expr_nonmet,
-    reference   = "precog",
-    cancer_type = "Pancreatic",
-    verbose     = TRUE
-  )
-}
-```
-
-    ## Detected input type: matrix
-
-    ## 7426 genes used for scoring against Pancreatic
-    ## Calculating scores...
-    ## Completed scoring for Pancreatic
-
-``` r
-if (length(met_idx) > 0) {
-  expr_met <- expr_tpm[, met_idx, drop = FALSE]
-  scores_met <- PhenoMap(
-    expression  = expr_met,
-    reference   = "precog",
-    cancer_type = "Pancreatic_Metastasis",
-    verbose     = TRUE
-  )
-}
-```
-
-    ## Detected input type: matrix
-
-    ## 3007 genes used for scoring against Pancreatic_Metastasis
-    ## Calculating scores...
-    ## Completed scoring for Pancreatic_Metastasis
-
-``` r
-clin$score_Pancreatic <- NA_real_
-clin$score_Pancreatic_Met <- NA_real_
-
-if (!is.null(scores_nonmet)) {
-  col_pan <- grep("Pancreatic$", colnames(scores_nonmet), value = TRUE)[1]
-  if (!is.na(col_pan)) {
-    clin$score_Pancreatic[non_met_idx] <- scores_nonmet[, col_pan]
+  if (length(non_met_idx) > 0) {
+    expr_nonmet <- expr_tpm[, non_met_idx, drop = FALSE]
+    scores_nonmet <- PhenoMap(
+      expression  = expr_nonmet,
+      reference   = "precog",
+      cancer_type = "Pancreatic",
+      verbose     = TRUE
+    )
   }
-}
 
-if (!is.null(scores_met)) {
-  col_met <- grep("Pancreatic_Metastasis", colnames(scores_met), value = TRUE)[1]
-  if (!is.na(col_met)) {
-    clin$score_Pancreatic_Met[met_idx] <- scores_met[, col_met]
+  if (length(met_idx) > 0) {
+    expr_met <- expr_tpm[, met_idx, drop = FALSE]
+    scores_met <- PhenoMap(
+      expression  = expr_met,
+      reference   = "precog",
+      cancer_type = "Pancreatic_Metastasis",
+      verbose     = TRUE
+    )
+  }
+
+  # Initialize score columns with correct length (avoids assignment errors when nrow(clin) == 0)
+  clin$score_Pancreatic <- rep(NA_real_, nrow(clin))
+  clin$score_Pancreatic_Met <- rep(NA_real_, nrow(clin))
+
+  if (!is.null(scores_nonmet)) {
+    col_pan <- grep("Pancreatic$", colnames(scores_nonmet), value = TRUE)[1]
+    if (!is.na(col_pan)) {
+      clin$score_Pancreatic[non_met_idx] <- scores_nonmet[, col_pan]
+    }
+  }
+
+  if (!is.null(scores_met)) {
+    col_met <- grep("Pancreatic_Metastasis", colnames(scores_met), value = TRUE)[1]
+    if (!is.na(col_met)) {
+      clin$score_Pancreatic_Met[met_idx] <- scores_met[, col_met]
+    }
   }
 }
 ```
+
+    ## No overlapping samples between expression and clinical metadata for GSE253260; skipping PhenoMap scoring/KM plots.
 
 ``` r
 dat_nonmet <- subset(clin, stage_group != "Metastatic" & !is.na(stage_group) & !is.na(score_Pancreatic))
@@ -1181,18 +613,14 @@ if (nrow(dat_nonmet) > 0) {
     ) +
     theme(legend.position = "none")
 }
-```
 
-![](bulk-survival_files/figure-html/gse253260-nonmet-plots-1.png)
-
-``` r
 dat_nonmet_os <- subset(dat_nonmet, !is.na(OS_Days) & !is.na(OS_Censor))
 if (nrow(dat_nonmet_os) >= 10) {
   median_cut <- median(dat_nonmet_os$score_Pancreatic, na.rm = TRUE)
   dat_nonmet_os$score_grp <- ifelse(dat_nonmet_os$score_Pancreatic >= median_cut, "High", "Low")
 
   fit_nonmet <- survfit(Surv(OS_Days, OS_Censor) ~ score_grp, data = dat_nonmet_os)
-  ggsurvplot(
+  p <- ggsurvplot(
     fit_nonmet,
     data = dat_nonmet_os,
     title = "GSE253260 (non-metastatic): OS by PRECOG Pancreatic score (median split)",
@@ -1200,6 +628,7 @@ if (nrow(dat_nonmet_os) >= 10) {
     legend.title = "Score group", legend.labs = c("High", "Low"),
     risk.table = FALSE
   )
+  print(p)
 }
 ```
 
@@ -1212,7 +641,7 @@ if (nrow(dat_met_os) >= 10) {
   dat_met_os$score_grp <- ifelse(dat_met_os$score_Pancreatic_Met >= median_cut_met, "High", "Low")
 
   fit_met <- survfit(Surv(OS_Days, OS_Censor) ~ score_grp, data = dat_met_os)
-  ggsurvplot(
+  p <- ggsurvplot(
     fit_met,
     data = dat_met_os,
     title = "GSE253260 (metastatic): OS by PRECOG Pancreatic_Metastasis score (median split)",
@@ -1220,8 +649,62 @@ if (nrow(dat_met_os) >= 10) {
     legend.title = "Score group", legend.labs = c("High", "Low"),
     risk.table = FALSE
   )
+  print(p)
 }
 ```
+
+``` r
+# Show OS curves within each stage, split by the median PRECOG score *within that stage*.
+suppressPackageStartupMessages(library(survival))
+if (!requireNamespace("survminer", quietly = TRUE)) {
+  message("Package 'survminer' not installed; skipping per-stage median-split KM plots.")
+} else {
+  suppressPackageStartupMessages(library(survminer))
+
+  stage_levels <- c("Resectable", "Borderline", "Locally Advanced", "Metastatic")
+  plots <- list()
+
+  for (st in stage_levels) {
+    dat <- subset(clin, stage_group == st & !is.na(OS_Days) & !is.na(OS_Censor))
+    if (nrow(dat) < 6) next
+
+    score_col <- if (st == "Metastatic") "score_Pancreatic_Met" else "score_Pancreatic"
+    if (!score_col %in% names(dat)) next
+    dat <- dat[!is.na(dat[[score_col]]), , drop = FALSE]
+    if (nrow(dat) < 6) next
+
+    med <- median(dat[[score_col]], na.rm = TRUE)
+    dat$score_grp <- factor(ifelse(dat[[score_col]] >= med, "High", "Low"), levels = c("Low", "High"))
+
+    fit <- survfit(Surv(OS_Days, OS_Censor) ~ score_grp, data = dat)
+    p <- ggsurvplot(
+      fit,
+      data = dat,
+      title = paste0("GSE253260: ", st, " (median split within stage)"),
+      xlab = "Time (days)",
+      ylab = "Survival probability",
+      legend.title = "PRECOG score",
+      legend.labs = c("Low", "High"),
+      risk.table = FALSE
+    )
+    plots[[st]] <- p$plot
+  }
+
+  if (length(plots) == 0) {
+    message("Not enough samples with OS + PRECOG score per stage to plot.")
+  } else if (requireNamespace("patchwork", quietly = TRUE)) {
+    suppressPackageStartupMessages(library(patchwork))
+    # Keep a stable order in the grid
+    ordered <- plots[intersect(stage_levels, names(plots))]
+    print(wrap_plots(ordered, ncol = 2))
+  } else {
+    # Fallback: print sequentially
+    for (nm in names(plots)) print(plots[[nm]])
+  }
+}
+```
+
+    ## Not enough samples with OS + PRECOG score per stage to plot.
 
 ## 7. Summary
 
