@@ -2,120 +2,214 @@
 
 ## Overview
 
-This vignette demonstrates how to use PhenoMapR on a single-cell RNA-seq
-dataset. We use the **CRA001160** PDAC dataset from [Peng et al. (*Cell
-Research* 2019)](https://doi.org/10.1038/s41422-019-0195-y) (single-cell
-RNA-seq of 57,530 pancreatic cells from primary PDAC tumors and control
-pancreases; [GSA:
-CRA001160](https://ngdc.cncb.ac.cn/gsa/browse/CRA001160)). Pre-processed
-expression and metadata were obtained from
-[TISCH2](https://tisch.compbio.cn/home/). We score the expression matrix
-with **TCGA** and **PRECOG** meta-z signatures (no Seurat required),
-then use the metadata and score outputs for visualizations, prognostic
-groups, and marker genes. Results are compared with [Jolasun et
-al.](https://www.nature.com/articles/s41467-025-66162-4)
-[**SIDISH**](https://www.nature.com/articles/s41467-025-66162-4).
+This vignette demonstrates how to use **`PhenoMapR`** on a single-cell
+RNA-seq dataset. We use the **CRA001160** pancreatic cancer dataset from
+[Peng et al. 2019](https://doi.org/10.1038/s41422-019-0195-y)
+[\[1\]](#ref1). This dataset comprises single-cell RNA-seq of 57,530
+pancreatic cells from 25 primary PAAD tumors and 9 control pancreases.
+Pre-processed expression and metadata were obtained from
+[TISCH2](https://tisch.compbio.cn/home/) [\[2\]](#ref2). We score all
+samples in the dataset with **TCGA** and **PRECOG** meta-z signatures
+[\[3\]](#ref3) then use the metadata and score outputs to visualize cell
+types of interest, define prognostic groups of cells, and identify
+marker genes for the most phenotype associated cell populations. Results
+are compared with those obtained using the **SIDISH** method from
+[Jolasun et
+al. 2025](https://www.nature.com/articles/s41467-025-66162-4)
+[\[4\]](#ref4).
 
-## Load data for CRA001160
+## Load data
 
-Download the expression matrix (10X H5) and cell metadata (TSV) from
-Google Drive. Align metadata to matrix columns and subsample for
-vignette runtime.
+We will use pre-processed expression and annotation files from TISCH2
+for the CRA001160 dataset. Download the expression matrix and cell
+metadata from Google Drive and visualize cell type distributions across
+all samples in the dataset.
 
 ``` r
 suppressPackageStartupMessages(library(PhenoMapR))
-suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(googledrive))
-if (requireNamespace("ggpubr", quietly = TRUE)) suppressPackageStartupMessages(library(ggpubr))
-if (requireNamespace("Seurat", quietly = TRUE)) suppressPackageStartupMessages(library(Seurat))
-
-knitr::opts_chunk$set(fig.width = 12, out.width = "100%")
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(ggpubr))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(Seurat))
+suppressPackageStartupMessages(library(patchwork))
+suppressPackageStartupMessages(library(pheatmap))
 
 options(googledrive_quiet = TRUE)
 googledrive::drive_deauth()
 googledrive::drive_download(googledrive::as_id("1PolTXggREz8XmhutCLTQJGCfKxFAzqMl"), "PAAD_CRA001160_expression.h5", overwrite = TRUE)
 googledrive::drive_download(googledrive::as_id("17mqxnKOZJn0jW2iD9RV0wZeWsilAIwdu"), "PAAD_CRA001160_CellMetainfo_table.tsv", overwrite = TRUE)
 
+# Expression matrix
 expr_mat <- Seurat::Read10X_h5("PAAD_CRA001160_expression.h5")
-if (is.list(expr_mat)) {
-  # Read10X_h5 can return a named list of matrices when multiple feature types exist.
-  expr_mat <- expr_mat[[1]]
-}
-meta <- read.delim("PAAD_CRA001160_CellMetainfo_table.tsv", stringsAsFactors = FALSE, check.names = FALSE)
 
-cell_ids <- colnames(expr_mat)
-id_col <- NULL
-for (cand in c("Barcode", "barcode", "cell_id", "Cell", "cell_barcode", names(meta)[1])) {
-  if (cand %in% names(meta) && length(intersect(meta[[cand]], cell_ids)) > 0) {
-    id_col <- cand
-    break
-  }
-}
-if (is.null(id_col)) id_col <- names(meta)[1]
-meta <- meta[meta[[id_col]] %in% cell_ids, , drop = FALSE]
-meta <- meta[match(cell_ids, meta[[id_col]]), , drop = FALSE]
-rownames(meta) <- colnames(expr_mat)
+# Cell and sample metadata
+meta <- read.delim("PAAD_CRA001160_CellMetainfo_table.tsv", stringsAsFactors = FALSE, check.names = FALSE) %>%
+   mutate(`Celltype (original)` = gsub(" cell", "", `Celltype (original)`)) %>%
+   dplyr::rename(celltype_malignancy = `Celltype (malignancy)`,
+         celltype_original = `Celltype (original)`)
 
-for (col in names(meta)) {
-  if (!(is.character(meta[[col]]) || is.factor(meta[[col]]))) next
-  nlev <- length(unique(meta[[col]][!is.na(meta[[col]])]))
-  if (nlev >= 2L && nlev <= 500L) {
-    celltype_col <- col
-    break
-  }
-}
-if (!exists("celltype_col")) celltype_col <- names(meta)[2]
-celltype_original_col <- if ("Celltype (original)" %in% names(meta)) "Celltype (original)" else NULL
+# visuals for cohort
+pal_cells <- PhenoMapR::get_celltype_palette(meta$celltype_original)
 
-max_cells <- 25000L
-if (ncol(expr_mat) > max_cells) {
-  set.seed(1)
-  keep_cells <- sample(colnames(expr_mat), max_cells)
-  expr_mat <- expr_mat[, keep_cells, drop = FALSE]
-  meta <- meta[keep_cells, , drop = FALSE]
-  message(sprintf("Subsampled to %d cells for vignette.", ncol(expr_mat)))
-}
+malignant_colors <- c(
+  "Others" = "#007D82FF",
+  "Immune cells" = "#388F30FF",
+  "Stromal cells" = "#C38961FF",
+  "Malignant cells" = "#950404FF"
+)
+
+# UMAPS for the cell type clustering
+
+# Broad cell group labels
+umap_1 <- ggscatter(meta, 
+          x = "UMAP_1", 
+          y = "UMAP_2",
+          size = .5,
+          color = "celltype_malignancy",
+          palette = malignant_colors,
+          legend = "right"
+) + guides(color = guide_legend(override.aes = list(size = 2))) +
+    labs(color = "Cell Type (Broad)") +
+  theme_void()
+
+# Original cell type labels from the authors
+umap_2 <- ggscatter(meta,
+          x = "UMAP_1", 
+          y = "UMAP_2",
+          size = .5,
+          color = "celltype_original",
+          palette = pal_cells,
+          legend = "right"
+) + guides(color = guide_legend(override.aes = list(size = 2), legend.spacing.x = unit(0.5, 'cm')))+
+  labs(color = "Cell Type") +
+  theme_void()
+
+
+# MALIGNANT PLOT 
+target_celltype <- "Malignant cells"
+
+# Calculate proportions
+prop_data_mal <- meta %>%
+  group_by(Patient, celltype_malignancy) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(Patient) %>%
+  mutate(proportion = n / sum(n))
+
+# Create a complete list with 0 for missing cell types
+sample_order <- prop_data_mal %>%
+  ungroup() %>%  # Add this!
+  filter(celltype_malignancy == target_celltype) %>%
+  tidyr::complete(Patient = unique(prop_data_mal$Patient), fill = list(proportion = 0)) %>%
+  arrange(desc(proportion)) %>%
+  pull(Patient)
+
+prop_data_mal$Patient <- factor(prop_data_mal$Patient, levels = sample_order)
+
+# Plot
+p_mal <- ggplot(prop_data_mal, aes(x = Patient, y = proportion, fill = celltype_malignancy)) +
+  geom_bar(stat = "identity", color = "white", linewidth = 0.2) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = malignant_colors) +
+  theme_pubclean(base_size = 8) +
+    theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(), 
+    axis.ticks.x = element_blank(),
+    legend.position = "none"
+  ) +
+  labs(x = NULL, y = NULL, fill = "Cell Type (Broad)")
+
+
+# CELL TYPE PLOT
+# Calculate proportions
+prop_data <- meta %>%
+  group_by(Patient, celltype_original) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(Patient) %>%
+  mutate(proportion = n / sum(n))
+
+prop_data$Patient <- factor(prop_data$Patient, levels = sample_order)
+
+# Plot
+p_cell <- ggplot(prop_data, aes(x = Patient, y = proportion, fill = celltype_original)) +
+  geom_bar(stat = "identity", color = "white", linewidth = 0.2) +
+  scale_y_continuous(labels = scales::percent) +
+    scale_fill_manual(values = pal_cells) +
+  theme_pubclean(base_size = 8) +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+        legend.position = "none") +
+  labs(x = NULL, 
+       y = "Proportion of cells",
+       fill = "Cell Type",
+       title = NULL)
+
+
+# NUMBER OF CELLS PER PATIENT
+meta$Patient <- factor(meta$Patient, levels = sample_order)
+
+p_num <- ggplot(meta, aes(x = Patient)) +
+  geom_bar(fill = "grey55", color = "white", linewidth = 0.2) +
+  theme_pubclean(base_size = 8) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(), 
+    axis.ticks.x = element_blank() 
+  ) +
+  labs(x = NULL, 
+       y = "# of cells",
+       title = NULL)
+
+# Left column with specific heights for each barplot
+left_plots <- (p_num / p_mal / p_cell) + 
+  plot_layout(heights = c(1, 1, 5), guides = "collect")
+
+# Right column with specific heights for UMAPs
+right_plots <- (umap_1 / umap_2) + 
+  plot_layout(heights = c(1, 1), guides = "collect")
+
+# Combine
+(left_plots | right_plots) + 
+  plot_layout(widths = c(1, 0.75))
 ```
 
-    ## Subsampled to 25000 cells for vignette.
+![](single-cell_files/figure-html/load-data-1.png)
+
+## Score cells with PhenoMapR
+
+Because we have survival meta-z signatures from both TCGA and PRECOG
+PAAD resources, we will score the expression matrix with both references
+and compare. We then merge score columns into metadata for downstream
+analysis.
 
 ``` r
-message(sprintf("Cells: %d | Genes: %d | Cell type: %s", ncol(expr_mat), nrow(expr_mat), celltype_col))
+# Score all cells against the TCGA PAAD meta-z signature
+scores_tcga <- PhenoMap(expression = expr_mat, 
+                        reference = "tcga", 
+                        cancer_type = "PAAD", 
+                        verbose = TRUE)
 ```
-
-    ## Cells: 25000 | Genes: 21066 | Cell type: Celltype (malignancy)
-
-## Score cells with TCGA and PRECOG Pancreatic
-
-Score the expression matrix with both references; merge score columns
-into metadata.
-
-``` r
-scores_tcga <- PhenoMap(expression = expr_mat, reference = "tcga", cancer_type = "PAAD", verbose = TRUE)
-```
-
-    ## Detected input type: matrix
-
-    ## Note: number of rows is not much larger than number of columns. Please ensure rows are gene IDs and columns are samples/cells/spots.
 
     ## 4844 genes used for scoring against PAAD
     ## Calculating scores...
     ## Completed scoring for PAAD
 
 ``` r
-scores_precog <- PhenoMap(expression = expr_mat, reference = "precog", cancer_type = "Pancreatic", verbose = TRUE)
+# Score all cells against the PRECOG Primary Pancreatic meta-z signature
+scores_precog <- PhenoMap(expression = expr_mat, 
+                          reference = "precog", 
+                          cancer_type = "Pancreatic", 
+                          verbose = TRUE)
 ```
-
-    ## Detected input type: matrix
-    ## Note: number of rows is not much larger than number of columns. Please ensure rows are gene IDs and columns are samples/cells/spots.
 
     ## 6556 genes used for scoring against Pancreatic
     ## Calculating scores...
     ## Completed scoring for Pancreatic
 
 ``` r
-for (col in names(scores_tcga)) meta[[col]] <- scores_tcga[rownames(meta), col]
-for (col in names(scores_precog)) meta[[col]] <- scores_precog[rownames(meta), col]
+for (col in names(scores_tcga)) meta[[col]] <- scores_tcga[meta$Cell, col]
+for (col in names(scores_precog)) meta[[col]] <- scores_precog[meta$Cell, col]
 
 score_tcga_col <- grep("weighted_sum_score.*PAAD", names(meta), value = TRUE, ignore.case = TRUE)[1]
 score_precog_col <- grep("weighted_sum_score.*Pancreatic", names(meta), value = TRUE, ignore.case = TRUE)[1]
@@ -123,123 +217,150 @@ if (is.na(score_tcga_col)) score_tcga_col <- names(scores_tcga)[1]
 if (is.na(score_precog_col)) score_precog_col <- names(scores_precog)[1]
 ```
 
-## Scatterplot: TCGA vs PRECOG scores
+## Compare TCGA vs PRECOG PhenoMapR scores
 
-Comparison of per-cell scores; points colored by cell type with
-regression line, 95% CI, and correlation by group.
+Here, we take the resulting **`PhenoMapR`** scores from using TCGA and
+PRECOG as references and check to make sure they are correlated within
+each of the four main cell type categories.
 
 ``` r
 df_scatter <- data.frame(
   x = meta[[score_precog_col]],
   y = meta[[score_tcga_col]],
-  Cell_type = factor(meta[[celltype_col]])
+  Cell_Type = factor(meta$celltype_malignancy)
 )
-pal_ct <- PhenoMapR::get_celltype_palette(levels(df_scatter$Cell_type))
-if (requireNamespace("ggpubr", quietly = TRUE)) {
-  p <- ggpubr::ggscatter(df_scatter, x = "x", y = "y", color = "Cell_type", palette = pal_ct,
+
+ggpubr::ggscatter(df_scatter, x = "x", y = "y", color = "Cell_Type", palette = malignant_colors,
     add = "reg.line", conf.int = TRUE, size = 0.5, alpha = 0.3) +
-    ggpubr::stat_cor(aes(color = Cell_type), label.x.npc = "left", size = 3.5) +
-    scale_x_continuous("PRECOG Pancreatic score") +
-    scale_y_continuous("TCGA PAAD score") +
-    labs(title = "CRA001160: TCGA vs PRECOG scores by cell type") +
-    theme_minimal(base_size = 14) +
-    theme(legend.position = "right", legend.title = element_text(size = 12), legend.text = element_text(size = 10),
-      axis.title = element_text(size = 14), axis.text = element_text(size = 12))
-  print(p)
-} else {
-  print(ggplot(df_scatter, aes(x = x, y = y, color = Cell_type)) +
-    geom_point(alpha = 0.3, size = 0.5) +
-    geom_smooth(method = "lm", se = TRUE, linewidth = 0.5) +
-    scale_color_manual(values = pal_ct, name = "Cell type") +
-    theme_minimal(base_size = 14) +
-    labs(x = "PRECOG Pancreatic score", y = "TCGA PAAD score", title = "CRA001160: TCGA vs PRECOG scores"))
-}
+    ggpubr::stat_cor(aes(color = Cell_Type), label.x.npc = "left", size = 3.5, show.legend = F) +
+  scale_color_manual(values = malignant_colors) +
+  scale_fill_manual(values = malignant_colors) +
+    scale_x_continuous("PRECOG score") +
+    scale_y_continuous("TCGA score") +
+    labs(title = "TCGA vs. PRECOG PhenoMapR scores by cell type") +
+    theme_pubr(base_size = 10) +
+    theme(legend.position = "right", legend.title = element_text(size = 12), legend.text = element_text(size = 10))
 ```
 
 ![](single-cell_files/figure-html/scatter-tcga-precog-1.png)
 
-PhenoMap scores are correlated between TCGA and PRECOG across cell
-types.
+As expected, **`PhenoMapR`** scores are strongly correlated between TCGA
+and PRECOG references across all major cell types.
 
-## Score distribution: TCGA and PRECOG by cell type (ordered by PRECOG)
+## PhenoMapR score UMAP
 
-Boxplots of score distributions for both references, with cell types
-ordered by median PRECOG score so that the most adverse (high PRECOG)
-cell types appear toward one side.
+``` r
+# PRECOG
+meta_ordered <- meta %>%
+  arrange(abs(weighted_sum_score_Pancreatic))
+
+# scale the score for easier visualization
+meta_ordered$score_scaled <- scale(meta_ordered$weighted_sum_score_Pancreatic)
+
+precog_scaled_umap <- ggscatter(meta_ordered,
+          x = "UMAP_1", 
+          y = "UMAP_2",
+          size = 1,
+          color = "score_scaled",
+          legend = "right", 
+          title = NULL
+) + 
+  scale_color_gradient2(
+    low = "#2166AC",
+    mid = "#F7F7F7",
+    high = "#B2182B",
+    midpoint = 0,  
+    name = "PhenoMapR Score"
+  ) +
+  theme_void() +
+    theme(plot.title = element_text(hjust = 0.5)) 
+
+# Let's plot next to the cell type UMAP for comparison
+(umap_2 | precog_scaled_umap) + 
+  plot_layout(widths = c(1, 1))
+```
+
+![](single-cell_files/figure-html/PhenoMapR-UMAP-1.png) It seems like
+the most adversely scoring cells are enriched in several of the Ductal
+type 2 cell clusters while the most favorable are enriching in the
+acinar and endocrine clusters.
+
+## Prognostic score distribution by Cell Type
+
+The qualitative assessment of PhenoMapR score enrichment across UMAP
+clusters nominated some cell types as potentially more associated with
+the phenotypic signature than others. Here, we plot the absolute
+PhenoMapR score (PRECOG and TCGA scores) across all cell types in the
+dataset.
 
 ``` r
 med_precog <- setNames(
-  tapply(meta[[score_precog_col]], meta[[celltype_col]], median, na.rm = TRUE),
-  levels(factor(meta[[celltype_col]]))
+  tapply(meta[[score_precog_col]], meta$celltype_malignancy, median, na.rm = TRUE),
+  levels(factor(meta$celltype_malignancy))
 )
-med_precog <- med_precog[!is.na(med_precog)]
+# med_precog <- med_precog[!is.na(med_precog)]
 ct_order <- names(sort(med_precog))
-meta[[celltype_col]] <- factor(meta[[celltype_col]], levels = ct_order)
+meta$celltype_malignancy <- factor(meta$celltype_malignancy, levels = ct_order)
 
 dl <- rbind(
-  data.frame(Reference = "TCGA PAAD", Score = meta[[score_tcga_col]], Cell_type = meta[[celltype_col]], stringsAsFactors = FALSE),
-  data.frame(Reference = "PRECOG Pancreatic", Score = meta[[score_precog_col]], Cell_type = meta[[celltype_col]], stringsAsFactors = FALSE)
+  data.frame(Reference = "TCGA PAAD", Score = meta[[score_tcga_col]], Cell_type = meta$celltype_malignancy, stringsAsFactors = FALSE),
+  data.frame(Reference = "PRECOG Pancreatic", Score = meta[[score_precog_col]], Cell_type = meta$celltype_malignancy, stringsAsFactors = FALSE)
 )
 dl$Reference <- factor(dl$Reference, levels = c("TCGA PAAD", "PRECOG Pancreatic"))
-pal_ct <- PhenoMapR::get_celltype_palette(ct_order)
 ggplot(dl, aes(x = Cell_type, y = Score, fill = Cell_type)) +
   geom_boxplot(outlier.alpha = 0.2) +
-  facet_wrap(~ Reference, ncol = 2, scales = "free_y") +
-  scale_fill_manual(values = pal_ct, name = "Cell type") +
-  theme_minimal() +
+  facet_wrap(~ Reference, ncol = 2) +
+  scale_fill_manual(values = malignant_colors, name = "Cell Type (Broad)") +
+  theme_pubr(base_size = 10) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "right", strip.text = element_text(size = 12)) +
-  labs(x = "Cell type (ordered by PRECOG median)", y = "PhenoMapR score", title = "CRA001160: Score distribution by reference and cell type")
+  labs(x = NULL, y = "PhenoMapR score", title = "Score distribution by reference and cell type")
 ```
 
 ![](single-cell_files/figure-html/score-distribution-boxplots-1.png)
 
-PhenoMapR successfully identifies the Malignant cell compartment as the
-most associated with the adverse prognostic signature in both TCGA and
-PRECOG.
+**`PhenoMapR`** successfully identifies the **Malignant** cell
+compartment as most associated with the adverse prognostic signature in
+both TCGA and PRECOG.
 
 ## Score distribution by refined cell type
 
-To see if the PhenoMapR score assignment is enriched in more granular
-cell types, we use the original cell type labels provided by the authors
-(*Peng et al.* 2019).
+To see if the **`PhenoMapR`** score assignment is enriched in more
+granular cell types, we use the original cell type labels provided by
+the authors (*Peng et al.* 2019).
 
 ``` r
-if (!is.null(celltype_original_col) && celltype_original_col %in% names(meta)) {
-  med_precog_orig <- setNames(
-    tapply(meta[[score_precog_col]], meta[[celltype_original_col]], median, na.rm = TRUE),
-    levels(factor(meta[[celltype_original_col]]))
-  )
-  med_precog_orig <- med_precog_orig[!is.na(med_precog_orig)]
-  ct_order_orig <- names(sort(med_precog_orig))
-  meta$celltype_original <- factor(meta[[celltype_original_col]], levels = ct_order_orig)
-  dl_orig <- rbind(
-    data.frame(Reference = "TCGA PAAD", Score = meta[[score_tcga_col]], Cell_type = meta$celltype_original, stringsAsFactors = FALSE),
-    data.frame(Reference = "PRECOG Pancreatic", Score = meta[[score_precog_col]], Cell_type = meta$celltype_original, stringsAsFactors = FALSE)
-  )
-  dl_orig$Reference <- factor(dl_orig$Reference, levels = c("TCGA PAAD", "PRECOG Pancreatic"))
-  pal_ct_orig <- PhenoMapR::get_celltype_palette(ct_order_orig)
-  print(ggplot(dl_orig, aes(x = Cell_type, y = Score, fill = Cell_type)) +
-    geom_boxplot(outlier.alpha = 0.2) +
-    facet_wrap(~ Reference, ncol = 2, scales = "free_y") +
-    scale_fill_manual(values = pal_ct_orig, name = "Celltype (original)") +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "right", strip.text = element_text(size = 12)) +
-    labs(x = "Celltype (original)", y = "PhenoMapR score", title = "CRA001160: Score by reference and Celltype (original)"))
-} else {
-  message("Celltype (original) not in metadata; skipping boxplots by original annotations.")
-}
+med_precog <- setNames(
+  tapply(meta[[score_precog_col]], meta$celltype_original, median, na.rm = TRUE),
+  levels(factor(meta$celltype_original))
+)
+# med_precog <- med_precog[!is.na(med_precog)]
+ct_order <- names(sort(med_precog))
+meta$celltype_original <- factor(meta$celltype_original, levels = ct_order)
+
+dl <- rbind(
+  data.frame(Reference = "TCGA PAAD", Score = meta[[score_tcga_col]], Cell_type = meta$celltype_original, stringsAsFactors = FALSE),
+  data.frame(Reference = "PRECOG Pancreatic", Score = meta[[score_precog_col]], Cell_type = meta$celltype_original, stringsAsFactors = FALSE)
+)
+dl$Reference <- factor(dl$Reference, levels = c("TCGA PAAD", "PRECOG Pancreatic"))
+ggplot(dl, aes(x = Cell_type, y = Score, fill = Cell_type)) +
+  geom_boxplot(outlier.alpha = 0.2) +
+  facet_wrap(~ Reference, ncol = 2) +
+  scale_fill_manual(values = pal_cells, name = "Cell Type (Original)") +
+  theme_pubr(base_size = 10) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "right", strip.text = element_text(size = 12)) +
+  labs(x = NULL, y = "PhenoMapR score", title = "Score distribution by reference and cell type")
 ```
 
 ![](single-cell_files/figure-html/score-distribution-celltype-original-1.png)
 
 In both TCGA and PRECOG results, we see that the Ductal cell type 2 is
 the most significantly associated cell type with an adverse prognostic
-signature in PAAD. This agrees with the results from SIDISH [Jolasun et
-al.](https://www.nature.com/articles/s41467-025-66162-4/figures/2),
-where they find over 55% of their high-risk cells were Ductal cell type
-2.
+signature in PAAD. This agrees with the results from **SIDISH** [Jolasun
+et al.](https://www.nature.com/articles/s41467-025-66162-4/figures/2),
+where they find **over 55% of their high-risk cells were Ductal cell
+type 2**.
 
-## Cell type representation in the most phenotypically associated populations
+## Cell types in the most prognostic populations
 
 Cell type counts in the top 5% (Most Adverse) and bottom 5% (Most
 Favorable) of cells by PRECOG score.
@@ -251,7 +372,7 @@ pg_tmp <- ifelse(meta[[score_precog_col]] >= q_hi, "Most Adverse", ifelse(meta[[
 idx_extreme <- !is.na(pg_tmp)
 ct_in_extreme <- meta[idx_extreme, ]
 ct_in_extreme$pg <- pg_tmp[idx_extreme]
-ct_counts <- as.data.frame(table(Cell_type = ct_in_extreme[[celltype_col]], pg = ct_in_extreme$pg))
+ct_counts <- as.data.frame(table(Cell_type = ct_in_extreme$celltype_malignancy, pg = ct_in_extreme$pg))
 ct_wide <- reshape(ct_counts, idvar = "Cell_type", timevar = "pg", direction = "wide")
 names(ct_wide) <- gsub("Freq\\.", "", names(ct_wide))
 for (c in c("Most Adverse", "Most Favorable")) {
@@ -269,21 +390,25 @@ ggplot(ct_long, aes(x = Cell_type, y = n, fill = pg)) +
   coord_flip() +
   scale_fill_manual(values = c(`Most Adverse` = "#B2182B", `Most Favorable` = "#2166AC"), name = "Prognostic group") +
   scale_y_continuous(breaks = seq(-max_n, max_n, length.out = 5), labels = abs(seq(-max_n, max_n, length.out = 5))) +
-  theme_minimal() +
-  theme(axis.text.y = element_text(size = 9), legend.position = "right") +
-  labs(x = "Cell type", y = "Cell count (5th %ile)", title = "CRA001160: Cell type in adverse vs favorable extremes")
+  theme_pubr(base_size = 10) +
+  theme(axis.text.y = element_text(size = 9), legend.position = c(.8,.75)) +
+  labs(x = NULL, y = "Cell count (in 5th percentile)", title = "Cell type abundance in adverse vs favorable extremes")
 ```
 
 ![](single-cell_files/figure-html/celltype-in-extreme-percentiles-1.png)
+At a broad cell type level, PhenoMapR assigns the vast majority of the
+top 5% of adverse cells to the malignant compartment, however the
+immune, stromal, and other cell types do contain some of the most
+adversely scoring cells.
 
-When original cell type annotations are available, the same
-representation can be shown for **Celltype (original)** labels.
+We then use the original cell type annotations from the authors to
+provide a more refined understanding of the prognostic score assignment
+across cell types.
 
 ``` r
-if (!is.null(celltype_original_col) && celltype_original_col %in% names(meta)) {
   ct_orig_in_extreme <- meta[idx_extreme, ]
   ct_orig_in_extreme$pg <- pg_tmp[idx_extreme]
-  ct_orig_counts <- as.data.frame(table(Cell_type_original = ct_orig_in_extreme[[celltype_original_col]], pg = ct_orig_in_extreme$pg))
+  ct_orig_counts <- as.data.frame(table(Cell_type_original = ct_orig_in_extreme$celltype_original, pg = ct_orig_in_extreme$pg))
   ct_orig_wide <- reshape(ct_orig_counts, idvar = "Cell_type_original", timevar = "pg", direction = "wide")
   names(ct_orig_wide) <- gsub("Freq\\.", "", names(ct_orig_wide))
   for (c in c("Most Adverse", "Most Favorable")) {
@@ -301,22 +426,25 @@ if (!is.null(celltype_original_col) && celltype_original_col %in% names(meta)) {
     coord_flip() +
     scale_fill_manual(values = c(`Most Adverse` = "#B2182B", `Most Favorable` = "#2166AC"), name = "Prognostic group") +
     scale_y_continuous(breaks = seq(-max_n_orig, max_n_orig, length.out = 5), labels = abs(seq(-max_n_orig, max_n_orig, length.out = 5))) +
-    theme_minimal() +
-    theme(axis.text.y = element_text(size = 9), legend.position = "right") +
-    labs(x = "Cell type (original)", y = "Cell count (5th %ile)", title = "CRA001160: Celltype (original) in adverse vs favorable extremes"))
-} else {
-  message("Celltype (original) not in metadata; skipping representation by original labels.")
-}
+  theme_pubr(base_size = 10) +
+    theme(axis.text.y = element_text(size = 9), legend.position = c(.8,.75)) +
+    labs(x = NULL, y = "Cell count (in 5th percentile)", title = "Cell Type (original) abundance in adverse vs favorable extremes"))
 ```
 
 ![](single-cell_files/figure-html/celltype-original-in-extreme-percentiles-1.png)
+Here, we see that the vase majority of the top 5th percentile of adverse
+PhenoMapR cells are from the Ductal type 2 cells, in line with the
+results of [Jolasun et
+al.](https://www.nature.com/articles/s41467-025-66162-4/figures/2). The
+majority of favorably scoring cells were Acinar and C cell populations.
 
 ## Prognostic groups and marker genes
 
-We define the “Most Adverse” and “Most Favorable” cells from the
-**PRECOG** score (5th/95th percentiles), then run marker identification
-(adverse vs rest, favorable vs rest) using the original cell type
-annotation for context.
+**`PhenoMapR`** provides some high-level analysis functions to help
+characterize the most phenotypically relevant cells. We define the “Most
+Adverse” and “Most Favorable” cells from the **PRECOG PhenoMapR** score
+(5th/95th percentiles), then run marker identification (adverse vs rest,
+favorable vs rest) using the original cell type annotation for context.
 
 ``` r
 scores_df <- meta[, c(score_tcga_col, score_precog_col), drop = FALSE]
@@ -334,41 +462,27 @@ if (!is.na(group_col)) {
 }
 ```
 
-    ## Using matrix-based marker detection (no Seurat): Most Adverse n=1250, Most Favorable n=1250
-
-    ## Subsampled Other from 22500 to 5000 cells (memory limit)
-
-    ## Warning in asMethod(object): sparse->dense coercion: allocating vector of size
-    ## 1.2 GiB
-
-    ## Adverse markers (top 5):
+    ##         gene avg_log2FC pct_in_group  pct_rest p_val p_adj
+    ## 13     ISG15  1.3634979     93.17786 41.839197     0     0
+    ## 34  AURKAIP1  0.8237655     93.83919 52.991236     0     0
+    ## 69      RER1  0.7967829     91.01984 41.686778     0     0
+    ## 76    PRXL2B  0.4068488     52.94118  9.526229     0     0
+    ## 101     ICMT  0.3150654     53.28924 12.282484     0     0
 
     ##        gene avg_log2FC pct_in_group pct_rest p_val p_adj
-    ## 244     CDA  0.6978046        55.76    8.320     0     0
-    ## 284    GALE  0.6063040        68.32   13.632     0     0
-    ## 334     SFN  1.1479165        77.04   13.904     0     0
-    ## 392 SERINC2  0.9355042        80.32   22.608     0     0
-    ## 425  TMEM54  0.8245556        72.32   17.920     0     0
+    ## 21079 ISG15 -1.2916584     15.97633 70.01143     0     0
+    ## 21192  ENO1 -1.6344839     34.63279 85.16449     0     0
+    ## 21295 CAPZB -0.9759845     31.56979 80.82053     0     0
+    ## 21298  NBL1 -0.7554952      9.64149 55.70939     0     0
+    ## 21325 CDC42 -1.1043594     37.66098 84.97396     0     0
 
-    ## Favorable markers (top 5):
+## Marker genes heatmap
 
-    ##          gene avg_log2FC pct_in_group pct_rest p_val p_adj
-    ## 22163 S100A11  -2.495032        60.24   96.096     0     0
-    ## 22174  S100A6  -2.864895        71.60   97.472     0     0
-    ## 23285  TMSB10  -1.930078        97.28   99.936     0     0
-    ## 27479    RAC1  -1.686747        54.00   92.976     0     0
-    ## 31246   NEAT1  -2.007018        70.72   96.432     0     0
-
-## Marker heatmap
-
-Top adverse and favorable marker genes; columns ordered by PhenoMapR
-score. Annotations: PhenoMapR score (blue \< 0, red \> 0), cell type,
-sample type (healthy/tumor), prognostic group.
+After identifying marker genes for the adverse and favorable
+**`PhenoMapR`** populations, we select the top genes and vizualize their
+relative expression levels across all cells in the dataset.
 
 ``` r
-if (is.null(markers)) {
-  message("Markers not available; skipping heatmap.")
-} else {
   n_top <- 15
   adverse_pos <- markers$adverse_markers[markers$adverse_markers$avg_log2FC > 0, ]
   favorable_pos <- markers$favorable_markers[markers$favorable_markers$avg_log2FC > 0, ]
@@ -390,76 +504,83 @@ if (is.null(markers)) {
 
   # Use raw (un-normalized) PhenoMapR scores for the heatmap annotation.
   # Clip to a symmetric range so the color scale is centered at 0 (blue < 0, white = 0, red > 0).
-  score_vals <- meta_ord[[score_precog_col]]
-  lim <- max(abs(score_vals), na.rm = TRUE)
-  if (!is.finite(lim) || lim <= 0) lim <- 0.01
-  score_for_anno <- pmax(pmin(score_vals, lim), -lim)
-  ct_anno_col <- if (!is.null(celltype_original_col) && celltype_original_col %in% names(meta_ord)) celltype_original_col else celltype_col
-  sample_type_col <- NULL
-  for (cand in c("Sample type", "Tissue", "Type", "Cancer", "Condition")) {
-    if (cand %in% names(meta_ord) && is.character(meta_ord[[cand]])) {
-      u <- unique(tolower(meta_ord[[cand]]))
-      if (any(grepl("normal|healthy|control", u)) && any(grepl("tumor|tumour|cancer|pdac", u))) {
-        sample_type_col <- cand
-        break
-      }
-    }
-  }
-  if (is.null(sample_type_col) && "Sample type" %in% names(meta_ord)) sample_type_col <- "Sample type"
-
-  ann_col <- data.frame(
-    `PhenoMapR score` = score_for_anno,
-    `Cell type` = factor(meta_ord[[ct_anno_col]]),
-    `Prognostic group` = factor(meta_ord[[group_col]], levels = c("Most Adverse", "Other", "Most Favorable")),
-    check.names = FALSE
-  )
-  if (!is.null(sample_type_col)) ann_col$`Sample type` <- factor(meta_ord[[sample_type_col]])
-  rownames(ann_col) <- colnames(mat_scaled)
-
-  pal_score <- colorRampPalette(c("#2166AC", "#F7F7F7", "#B2182B"))(100)
-  pal_group <- c(`Most Adverse` = "#B2182B", Other = "#F7F7F7", `Most Favorable` = "#2166AC")
-  pal_celltype <- PhenoMapR::get_celltype_palette(as.character(ann_col$`Cell type`))
-  ann_colors <- list(
-    `PhenoMapR score` = pal_score,
-    `Cell type` = pal_celltype,
-    `Prognostic group` = pal_group
-  )
-  if (!is.null(sample_type_col)) {
-    st_lev <- levels(ann_col$`Sample type`)
-    ann_colors$`Sample type` <- setNames(PhenoMapR::get_celltype_palette(st_lev), st_lev)
-  }
-  heatmap_colors <- if (requireNamespace("paletteer", quietly = TRUE)) {
-    colorRampPalette(paletteer::paletteer_d("MexBrewer::Vendedora"))(100)
+  create_diverging_palette <- function(values) {
+  # Get range
+  min_val <- min(values, na.rm = TRUE)
+  max_val <- max(values, na.rm = TRUE)
+  
+  # Determine breaks
+  if (min_val >= 0) {
+    # Only positive values
+    breaks <- seq(0, max_val, length.out = 100)
+    colors <- colorRampPalette(c("#F7F7F7", "#B2182B"))(100)
+  } else if (max_val <= 0) {
+    # Only negative values
+    breaks <- seq(min_val, 0, length.out = 100)
+    colors <- colorRampPalette(c("#2166AC", "#F7F7F7"))(100)
   } else {
-    colorRampPalette(c("#2166AC", "#F7F7F7", "#B2182B"))(100)
+    # Both positive and negative
+    # Make symmetric around 0 for balanced colors
+    abs_max <- max(abs(min_val), abs(max_val))
+    breaks <- seq(-abs_max, abs_max, length.out = 100)
+    colors <- colorRampPalette(c("#2166AC", "#F7F7F7", "#B2182B"))(100)
   }
-  if (requireNamespace("pheatmap", quietly = TRUE)) {
-    pheatmap::pheatmap(
-      mat_scaled,
-      scale = "none",
-      cluster_cols = FALSE,
-      cluster_rows = FALSE,
-      show_colnames = FALSE,
-      annotation_col = ann_col,
-      annotation_colors = ann_colors,
-      color = heatmap_colors,
-      breaks = seq(-3, 3, length.out = 101),
-      main = "Top adverse & favorable marker genes (CRA001160)",
-      fontsize_row = 8
-    )
-  } else {
-    heatmap(mat_scaled, scale = "none", Colv = NA, col = heatmap_colors, labCol = FALSE, main = "Top marker genes (CRA001160)")
-  }
+  
+  list(breaks = breaks, colors = colors)
+} 
+# Create the palette
+score_palette <- create_diverging_palette(meta_ord[[score_precog_col]])
+
+ann_col <- data.frame(
+  `PhenoMapR score` = meta_ord[[score_precog_col]],
+  `Cell type` = factor(meta_ord$celltype_original),
+  `Prognostic group` = factor(meta_ord[[group_col]], levels = c("Most Adverse", "Other", "Most Favorable")),
+  check.names = FALSE
+)
+rownames(ann_col) <- colnames(mat_scaled)
+
+pal_group <- c(`Most Adverse` = "#B2182B", Other = "#F7F7F7", `Most Favorable` = "#2166AC")
+
+# Ensure alignment
+celltype_levels <- levels(meta_ord$celltype_original)
+pal_celltype <- pal_cells[celltype_levels]
+
+
+ann_colors <- list(
+  `PhenoMapR score` = score_palette$colors,  # Use the colors from your function
+  `Cell type` = pal_celltype,
+  `Prognostic group` = pal_group
+)
+
+heatmap_colors <- if (requireNamespace("paletteer", quietly = TRUE)) {
+  colorRampPalette(paletteer::paletteer_d("MexBrewer::Vendedora"))(100)
+} else {
+  colorRampPalette(c("#2166AC", "#F7F7F7", "#B2182B"))(100)
 }
+
+pheatmap::pheatmap(
+  mat_scaled,
+  scale = "none",
+  cluster_cols = FALSE,
+  cluster_rows = FALSE,
+  show_colnames = FALSE,
+  annotation_col = ann_col,
+  annotation_colors = ann_colors,
+  color = heatmap_colors,
+  breaks = seq(-3, 3, length.out = 101),
+  main = "Top adverse & favorable PhenoMapR marker genes",
+  fontsize_row = 8
+)
 ```
 
 ![](single-cell_files/figure-html/heatmap-markers-1.png)
 
-## Proportion of prognostic cells by sample and cell type
+## Dataset summary of PhenoMapR results
 
-Stacked bar (top): proportion of Most Adverse and Most Favorable cells
-(5th percentile) per sample. Below: proportion within each sample and
-cell type.
+Here, we summarize the enrichment of prognostic PhenoMapR scores across
+samples and cell types to highlight the difference in signal between
+healthy and tumor samples as well as between different cell populations
+across the sample groups.
 
 ``` r
 sample_col <- NULL
@@ -473,8 +594,9 @@ if (is.null(sample_col)) sample_col <- names(meta)[1]
 
 meta_plot <- meta
 meta_plot$sample <- meta_plot[[sample_col]]
-meta_plot$cell_type <- meta_plot[[celltype_col]]
-meta_plot$cell_type_original <- if (!is.null(celltype_original_col) && celltype_original_col %in% names(meta_plot)) meta_plot[[celltype_original_col]] else NA_character_
+meta_plot$cell_type <- meta_plot$celltype_malignancy
+# meta_plot$cell_type_original <- if (!is.null(celltype_original) && celltype_original %in% names(meta_plot)) meta_plot$celltype_original else NA_character_
+meta_plot$cell_type_original <- meta$celltype_original
 meta_plot$prognostic_grp <- meta_plot[[group_col]]
 sample_lev <- levels(factor(meta[[sample_col]]))
 meta_plot$sample <- factor(meta_plot[[sample_col]], levels = sample_lev)
@@ -521,17 +643,17 @@ if (nrow(meta_plot) > 0) {
     scale_x_continuous(breaks = seq_along(sample_lev), labels = sample_lev) +
     scale_y_continuous(expand = c(0, 0)) +
     theme_minimal() +
-    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title.x = element_blank(), legend.position = "right") +
-    labs(y = "Proportion (5th %ile)", title = "Adverse vs favorable per sample")
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title.x = element_blank(), legend.position = "none") +
+    labs(y = "Proportion\n(5th percentile)", title = NULL)
 
   p_dots <- ggplot(counts, aes(x = x_num, y = cell_type, size = proportion, color = pg)) +
     geom_point(alpha = 0.85) +
     scale_color_manual(values = c(`Most Adverse` = "#B2182B", `Most Favorable` = "#2166AC"), name = "Prognostic group") +
-    scale_size_continuous(range = c(0, 8), name = "Proportion") +
+    scale_size_continuous(range = c(0, 5), name = "Proportion") +
     scale_x_continuous(breaks = seq_along(sample_lev), labels = sample_lev) +
     theme_minimal() +
     theme(panel.grid.major.y = element_line(color = "grey90"), axis.title = element_text(size = 10), axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.position = "right") +
-    labs(x = "Sample", y = "Cell type", title = "By cell type and sample (CRA001160)")
+    labs(x = NULL, y = "Cell type", title = NULL)
 
   # Same plot, but using original cell type labels (when available)
   p_dots_orig <- NULL
@@ -548,11 +670,14 @@ if (nrow(meta_plot) > 0) {
     p_dots_orig <- ggplot(counts_orig, aes(x = x_num, y = cell_type_original, size = proportion, color = pg)) +
       geom_point(alpha = 0.85) +
       scale_color_manual(values = c(`Most Adverse` = "#B2182B", `Most Favorable` = "#2166AC"), name = "Prognostic group") +
-      scale_size_continuous(range = c(0, 8), name = "Proportion") +
+      scale_size_continuous(range = c(0, 5), name = "Proportion") +
       scale_x_continuous(breaks = seq_along(sample_lev), labels = sample_lev) +
       theme_minimal() +
-      theme(panel.grid.major.y = element_line(color = "grey90"), axis.title = element_text(size = 10), axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "right") +
-      labs(x = "Sample", y = "Cell type (original)", title = "By Celltype (original) and sample (CRA001160)")
+      theme(panel.grid.major.y = element_line(color = "grey90"), axis.title = element_text(size = 10), 
+            axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+            legend.position = "none") +
+      labs(x = "Sample", y = "Cell type (original)", title = NULL) +
+      guides(color = guide_legend(override.aes = list(size = 3)))
   }
 
   if (requireNamespace("patchwork", quietly = TRUE)) {
@@ -576,28 +701,37 @@ if (nrow(meta_plot) > 0) {
 
 ## Conclusions
 
-Here, we demonstrate that using PhenoMapR on single-cell RNAseq data in
-a pancreatic cancer dataset successfully identified cells known to be
-associated with disease (malignant and ductal type 1). These results
-agree with those of Jolasun et al., however our PhenoMapR results
-provide an increased level of granularity compared to other methods,
-since we retain absolute and rank-ordered information regarding all
-cell’s phenotype association. We also nominate those most associated
+Here, we demonstrate that using **`PhenoMapR`** on single-cell RNAseq
+data in a pancreatic cancer dataset successfully identified cells known
+to be associated with disease (malignant and ductal type 1). These
+results agree with those of Jolasun et al., however our **PhenoMapR\`**
+results provide an increased level of granularity compared to other
+methods, since we retain absolute and rank-ordered information regarding
+all cell’s phenotype association. We also nominate those most associated
 with favorable outcomes in PAAD, highlighting potential areas for
 additional therapeutic focus.
 
 ## References
 
-- **CRA001160 (single-cell PDAC dataset)**: Peng J, Sun B-F, Chen C-Y,
-  Zhou J-Y, Chen Y-S, et al. Single-cell RNA-seq highlights
-  intra-tumoral heterogeneity and malignant progression in pancreatic
-  ductal adenocarcinoma. *Cell Research* 29, 725–738 (2019).
-  <https://doi.org/10.1038/s41422-019-0195-y>. Data: [GSA:
-  CRA001160](https://ngdc.cncb.ac.cn/gsa/browse/CRA001160).
+**\[1\]** Peng, J. et al. Single-cell RNA-seq highlights intra-tumoral
+heterogeneity and malignant progression in pancreatic ductal
+adenocarcinoma. *Cell Research* 29, 725–738 (2019).
+<https://doi.org/10.1038/s41422-019-0195-y>
 
-- **PRECOG 2.0**: Benard B, Lalgudi S, et al. PRECOG 2.0: an updated
-  resource of pan-cancer gene-level prognostic meta-z scores. *Nucleic
-  Acids Research*. 2026.
+**\[2\]** Han, Y. et al. TISCH2: expanded datasets and new tools for
+single-cell transcriptome analyses of the tumor microenvironment.
+*Nucleic Acids Res* 51, D1425–D1431 (2023).
+<https://doi.org/10.1093/nar/gkac959>
+
+**\[3\]** Benard, B. et al. PRECOG update: an augmented resource of
+clinical outcome associations with gene expression for adult, pediatric,
+and immunotherapy cohorts. *Nucleic Acids Res.* 54, D1579–D1589 (2026).
+<https://doi.org/10.1093/nar/gkaf1215>
+
+**\[4\]** Jolasun, Y. et al. SIDISH integrates single-cell and bulk
+transcriptomics to identify high-risk cells and guide precision
+therapeutics through in silico perturbation. *Nat Commun* 16, 11271
+(2025). <https://doi.org/10.1038/s41467-025-66162-4>
 
 ## Session Info
 
@@ -626,8 +760,9 @@ sessionInfo()
     ## [1] stats     graphics  grDevices utils     datasets  methods   base     
     ## 
     ## other attached packages:
-    ## [1] patchwork_1.3.2    Seurat_5.4.0       SeuratObject_5.3.0 sp_2.2-1          
-    ## [5] ggpubr_0.6.3       googledrive_2.1.2  ggplot2_4.0.2      PhenoMapR_0.1.0   
+    ##  [1] pheatmap_1.0.13    patchwork_1.3.2    Seurat_5.4.0       SeuratObject_5.3.0
+    ##  [5] sp_2.2-1           dplyr_1.2.0        ggpubr_0.6.3       ggplot2_4.0.2     
+    ##  [9] googledrive_2.1.2  PhenoMapR_0.1.0   
     ## 
     ## loaded via a namespace (and not attached):
     ##   [1] RColorBrewer_1.1-3     jsonlite_2.0.0         magrittr_2.0.4        
@@ -658,20 +793,20 @@ sessionInfo()
     ##  [76] reshape2_1.4.5         generics_0.1.4         hdf5r_1.3.12          
     ##  [79] gtable_0.3.6           spatstat.data_3.1-9    tidyr_1.3.2           
     ##  [82] data.table_1.18.2.1    car_3.1-5              spatstat.geom_3.7-0   
-    ##  [85] RcppAnnoy_0.0.23       ggrepel_0.9.7          RANN_2.6.2            
+    ##  [85] RcppAnnoy_0.0.23       ggrepel_0.9.8          RANN_2.6.2            
     ##  [88] pillar_1.11.1          stringr_1.6.0          spam_2.11-3           
     ##  [91] RcppHNSW_0.6.0         later_1.4.8            splines_4.5.3         
-    ##  [94] dplyr_1.2.0            lattice_0.22-9         bit_4.6.0             
-    ##  [97] survival_3.8-6         deldir_2.0-4           tidyselect_1.2.1      
-    ## [100] miniUI_0.1.2           pbapply_1.7-4          knitr_1.51            
-    ## [103] gridExtra_2.3          scattermore_1.2        xfun_0.56             
-    ## [106] matrixStats_1.5.0      pheatmap_1.0.13        stringi_1.8.7         
-    ## [109] lazyeval_0.2.2         yaml_2.3.12            evaluate_1.0.5        
-    ## [112] codetools_0.2-20       tibble_3.3.1           cli_3.6.5             
-    ## [115] uwot_0.2.4             xtable_1.8-8           reticulate_1.45.0     
-    ## [118] systemfonts_1.3.2      jquerylib_0.1.4        Rcpp_1.1.1            
-    ## [121] spatstat.random_3.4-4  globals_0.19.1         png_0.1-9             
-    ## [124] spatstat.univar_3.1-6  parallel_4.5.3         pkgdown_2.2.0         
-    ## [127] presto_1.0.0           dotCall64_1.2          listenv_0.10.1        
-    ## [130] viridisLite_0.4.3      scales_1.4.0           ggridges_0.5.7        
-    ## [133] purrr_1.2.1            rlang_1.1.7            cowplot_1.2.0
+    ##  [94] lattice_0.22-9         bit_4.6.0              survival_3.8-6        
+    ##  [97] deldir_2.0-4           tidyselect_1.2.1       miniUI_0.1.2          
+    ## [100] pbapply_1.7-4          knitr_1.51             gridExtra_2.3         
+    ## [103] scattermore_1.2        xfun_0.56              matrixStats_1.5.0     
+    ## [106] stringi_1.8.7          lazyeval_0.2.2         yaml_2.3.12           
+    ## [109] evaluate_1.0.5         codetools_0.2-20       tibble_3.3.1          
+    ## [112] cli_3.6.5              uwot_0.2.4             xtable_1.8-8          
+    ## [115] reticulate_1.45.0      systemfonts_1.3.2      jquerylib_0.1.4       
+    ## [118] Rcpp_1.1.1             spatstat.random_3.4-4  globals_0.19.1        
+    ## [121] png_0.1-9              spatstat.univar_3.1-6  parallel_4.5.3        
+    ## [124] pkgdown_2.2.0          presto_1.0.0           dotCall64_1.2         
+    ## [127] listenv_0.10.1         viridisLite_0.4.3      scales_1.4.0          
+    ## [130] ggridges_0.5.7         purrr_1.2.1            rlang_1.1.7           
+    ## [133] cowplot_1.2.0

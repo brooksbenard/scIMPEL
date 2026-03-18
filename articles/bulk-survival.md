@@ -2,120 +2,94 @@
 
 ## Overview
 
-This vignette is an **example of using PhenoMapR to score bulk RNA-seq
-samples** and to **show that the resulting score stratifies outcome**.
-PhenoMapR has built-in pan-cancer outcomes meta-z score signatures from
-[PRECOG](https://precog.stanford.edu/). To demonstrate that PhenoMapR
-can assign prognostic risk to patient samples profiled by bulk RNAseq,
-we use the
+This vignette shows how to **apply PhenoMapR to score bulk RNA-seq
+samples** using the built-in pan-cancer outcomes meta-z score signatures
+from [PRECOG](https://precog.stanford.edu/) [\[1\]](#ref1). We use the
 [GSE205154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE205154)
 dataset: **289 primary and metastatic pancreatic ductal adenocarcinoma
-(PDAC)** samples with gene expression and overall survival (Sears et
-al.). Pre-processed gene expression and cleaned clinical annotations
-were obtained from [PRECOG](https://precog.stanford.edu/). After scoring
-samples with PhenoMapR’s built-in PRECOG references, we stratify by
-score (high vs low) and demonstrate that the PhenoMapR score separates
-survival in both primary and metastatic groups.
+(PAAD)** samples with gene expression and overall survival (Link et al.)
+[\[2\]](#ref2). After scoring samples with **`PhenoMapR`**’s built-in
+PRECOG references, we stratify by **`PhenoMapR`** score and demonstrate
+that this separates survival in both primary and metastatic groups.
 
-**Data files** (downloadable from
-[PRECOG](https://precog.stanford.edu/)):
+**Data used for vignette**:
 
-- `GSE205154.GPL20301.matrix.txt` — normalized expression (genes ×
+- `GSE205154_GPL20301_expression.rds` — normalized expression (genes ×
   samples)
-- `GSE205154.info.txt` — sample annotations (Tumor_Type: Primary / Met,
+- `GSE205154_info.rds` — sample annotations (Tumor_Type: Primary / Met,
   OS_Time, OS_Status, Specimen_Site when available)
 
 ## 1. Load bulk expression and clinical annotations for GSE205154
 
-Load the expression matrix and clinical info so we can score samples
-with PhenoMapR and link scores to outcome.
+We use `GSE205154` because it’s a fairly large PAAD dataset that also
+includes metastatic samples, which we can score separately using the
+Primary and Metastatic meta-z scores from PRECOG.
 
 ``` r
-knitr::opts_chunk$set(fig.width = 6, fig.height = 6, fig.align = "center")
 suppressPackageStartupMessages(library(PhenoMapR))
+suppressPackageStartupMessages(library(patchwork))
+suppressPackageStartupMessages(library(ggplot2))
 
-# Vignette data: local paths, then Google Drive, then optional URL env vars.
-vignette_dir <- if (dir.exists("vignettes")) "vignettes" else if (dir.exists("Vignettes")) "Vignettes" else "."
-if (!dir.exists(vignette_dir)) dir.create(vignette_dir, recursive = TRUE, showWarnings = FALSE)
+# Vignette data, downloaded from Google Drive.
+googledrive::drive_deauth()
+options(googledrive_quiet = TRUE)    
 
-matrix_path <- file.path(vignette_dir, "GSE205154.GPL20301.matrix.txt")
-info_path <- file.path(vignette_dir, "GSE205154.info.txt")
+# Patient annotations
+googledrive::drive_download(googledrive::as_id("1c0GUMVzAr6K44Z7CfVRz-dy6jIvb0nNo"), "GSE205154_info.rds", overwrite = TRUE)
+pheno <- readRDS("GSE205154_info.rds")
+    
+# Expression matrix
+googledrive::drive_download(googledrive::as_id("16P-rfXD734seGl_xxTQuSDGMStQk9G7B"), "GSE205154_GPL20301_expression.rds", overwrite = TRUE)
+bulk_mat <- readRDS("GSE205154_GPL20301_expression.rds")
 
-if (!file.exists(matrix_path) && !nzchar(Sys.getenv("CI", "")) && requireNamespace("googledrive", quietly = TRUE)) {
-  tryCatch({
-    googledrive::drive_deauth()
-    googledrive::drive_download(googledrive::as_id("1Vk4KCQWF9ikpAuMsjFzVDCoy1TzDl2rN"), matrix_path, overwrite = TRUE)
-  }, error = function(e) {
-    message("Could not download GSE205154 matrix via googledrive: ", conditionMessage(e))
-  })
-}
-if (!file.exists(info_path) && !nzchar(Sys.getenv("CI", "")) && requireNamespace("googledrive", quietly = TRUE)) {
-  tryCatch({
-    googledrive::drive_deauth()
-    googledrive::drive_download(googledrive::as_id("1omAA2kfVn-nyyZfcc4vBhRFogC6cuoNQ"), info_path, overwrite = TRUE)
-  }, error = function(e) {
-    message("Could not download GSE205154 info via googledrive: ", conditionMessage(e))
-  })
-}
-if (!file.exists(matrix_path)) {
-  u <- Sys.getenv("PHENOMAPR_GSE205154_MATRIX_URL", "")
-  if (nzchar(u)) tryCatch({ download.file(u, matrix_path, mode = "wb", quiet = TRUE) }, error = function(e) NULL)
-}
-if (!file.exists(info_path)) {
-  u <- Sys.getenv("PHENOMAPR_GSE205154_INFO_URL", "")
-  if (nzchar(u)) tryCatch({ download.file(u, info_path, mode = "wb", quiet = TRUE) }, error = function(e) NULL)
-}
-
-has_data <- file.exists(info_path) && file.exists(matrix_path)
-knitr::opts_chunk$set(eval = has_data)
-if (!has_data) {
-  message("GSE205154 data files not found. See Vignettes/README.md for download instructions.")
-} else {
-  # Clinical annotations: Array = sample ID, Tumor_Type = Primary/Met, OS_Time, OS_Status, Specimen_Site (when available)
-  info <- read.delim(info_path, stringsAsFactors = FALSE, check.names = FALSE)
-  colnames(info)[colnames(info) == "Array"] <- "sample_id"
-  info$tumor_type <- info$Tumor_Type
-  site_col <- intersect(c("Specimen_Site", "Specimen.Site"), colnames(info))[1]
-  if (!is.na(site_col)) info$specimen_site <- info[[site_col]]
-  info$survival_time <- as.numeric(info$OS_Time) / 365.25  # convert to years
-  info$survival_event <- as.integer(info$OS_Status)
-  info <- info[!is.na(info$survival_time) & !is.na(info$survival_event), ]
-
-  # Expression matrix: Gene (ENSG), Name (symbol), then GSM columns
-  mat <- read.delim(matrix_path, stringsAsFactors = FALSE, check.names = FALSE)
-  # Use gene symbol (Name); keep first of duplicates, drop empty/NA
-  mat$Name[mat$Name == "" | is.na(mat$Name)] <- NA
-  mat <- mat[!is.na(mat$Name), ]
-  mat <- mat[!duplicated(mat$Name), ]
-  rownames(mat) <- mat$Name
-  sample_cols <- grep("^GSM", colnames(mat), value = TRUE)
-  bulk_mat <- as.matrix(mat[, sample_cols])
-  mode(bulk_mat) <- "numeric"
-
-  # Align to samples in clinical info
-  keep <- intersect(colnames(bulk_mat), info$sample_id)
-  bulk_mat <- bulk_mat[, keep, drop = FALSE]
-  pheno <- info[info$sample_id %in% keep, ]
-  pheno <- pheno[match(keep, pheno$sample_id), ]
-  rownames(pheno) <- pheno$sample_id
-
-  message("Expression: ", nrow(bulk_mat), " genes × ", ncol(bulk_mat), " samples")
-  message("Phenotype: ", nrow(pheno), " samples (Primary: ", sum(pheno$tumor_type == "Primary"), ", Met: ", sum(pheno$tumor_type == "Met"), ")")
-}
+message("Expression: ", nrow(bulk_mat), " genes × ", ncol(bulk_mat), " samples")
 ```
 
     ## Expression: 38562 genes × 289 samples
 
+``` r
+message("Phenotype: ", nrow(pheno), " samples (Primary: ", sum(pheno$tumor_type == "Primary"), ", Met: ", sum(pheno$tumor_type == "Met"), ")")
+```
+
     ## Phenotype: 289 samples (Primary: 218, Met: 71)
+
+``` r
+p_type <-  ggplot(pheno, aes(x = reorder(Tumor_Type, Tumor_Type, function(x) -length(x)),
+                  fill = Tumor_Type)) +  # Add fill mapping
+  geom_bar(color = "white", linewidth = 0.2) +
+  scale_fill_manual(values = c("Primary" = "tan", "Met" = "darkred")) +  # Set colors
+  geom_text(stat = 'count', aes(label = after_stat(count)), 
+            vjust = -0.5, size = 3.5, color = "black") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +  # Hide legend since it's obvious from x-axis
+  labs(x = NULL, y = "# of Patients", title = "Tumor Type") +
+  ylim(0, max(table(pheno$Tumor_Type)) * 1.1)
+
+p_site <- ggplot(subset(pheno, Tumor_Type == "Met"), aes(x = reorder(Specimen_Site, Specimen_Site, function(x) -length(x)))) +
+  geom_bar(fill = "darkred", color = "white", linewidth = 0.2) +
+  geom_text(stat = 'count', aes(label = after_stat(count)), vjust = -0.5, size = 3.5, color = "black") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = NULL, y = "# of Patients", title = "Metastatic Site") +
+  ylim(0, max(table(pheno$Specimen_Site[pheno$Tumor_Type == "Met"])) * 1.1)
+
+# plot both side-by-side
+print(p_type + p_site + patchwork::plot_layout(widths = c(1, 2)))
+```
+
+![](bulk-survival_files/figure-html/load-data-1.png)
 
 ## 2. Score bulk samples with PhenoMapR
 
-Score all samples with PhenoMapR using the built-in meta-z score
-signatures for Adult PRECOG **Pancreatic** (primary) and
-**Pancreatic_Metastasis**. By assigning a prognostic risk score to the
-samples, we should be able to identify patients expressing more
-adversely prognostic signatures as well as more favorably prognostic
-signatures and this should stratify outcomes.
+Here, we score all samples with **`PhenoMapR`** using the built-in Adult
+PRECOG meta-z score signatures for primary and metastatic PAAD. By
+assigning a prognostic risk score to the samples, we should be able to
+identify patients expressing more adversely prognostic signatures as
+well as more favorably prognostic signatures and this should stratify
+outcomes.
 
 ``` r
 # To assign a PhenoMap score to each sample, pass the bulk gene expression matrix
@@ -169,34 +143,56 @@ dat <- merge(pheno, scores_df, by = "sample_id")
 ```
 
 ``` r
-# Summary histogram: Primary and Metastatic PhenoMapR scores (z-scaled)
-suppressPackageStartupMessages(library(ggplot2))
+# Summary histogram: Primary and Metastatic PhenoMapR scores (scaled)
 score_long <- data.frame(
   score = c(dat$score_Pancreatic, dat$score_Pancreatic_Metastasis),
-  type = rep(c("Pancreatic (primary)", "Pancreatic_Metastasis"), each = nrow(dat))
+  type = rep(c("Pancreatic (Primary)", "Pancreatic (Metastasis)"), each = nrow(dat))
 )
-score_long$score_z <- as.numeric(scale(score_long$score))
-ggplot(score_long, aes(x = score_z, fill = type)) +
+
+
+scale_preserve_sign <- function(x) {
+  # Scale negative values: -1 to 0
+  neg_idx <- x < 0
+  if (any(neg_idx)) {
+    x[neg_idx] <- x[neg_idx] / abs(min(x, na.rm = TRUE))
+  }
+  # Scale positive values: 0 to 1
+  pos_idx <- x > 0
+  if (any(pos_idx)) {
+    x[pos_idx] <- x[pos_idx] / max(x, na.rm = TRUE)
+  }
+  return(x)
+}
+
+score_long$score_scale = scale_preserve_sign(score_long$score)
+
+ggplot(score_long, aes(x = score_scale, fill = type)) +
   geom_histogram(alpha = 0.8, position = "identity", bins = 30) +
-  scale_fill_manual(values = c("Pancreatic (primary)" = "tan", "Pancreatic_Metastasis" = "darkred")) +
-  labs(x = "PhenoMapR score (z-scaled)", y = "Count", fill = "Signature", title = "PhenoMapR score distribution") +
+  scale_fill_manual(values = c("Pancreatic (Primary)" = "tan", "Pancreatic (Metastasis)" = "darkred")) +
+  labs(x = "PhenoMapR score (scaled)", y = "Count", fill = "Signature score", title = "PhenoMapR score distribution") +
   theme_minimal()
 ```
 
 ![](bulk-survival_files/figure-html/score-histogram-1.png)
+Interestingly, it appears that the metastatic PAAD patients are scoring
+with a more favorable **`PhenoMapR`** score based on the metastatic PAAD
+signature used. The primary PAAD patients are all scoring more adversely
+prognostic based on the primary PAAD PRECOG signature. This suggests
+that the metastatic patient population in this dataset might be less
+adversely prognostic than the average metastatic PAAD population.
 
 ## 3. Primary vs Metastatic outcomes
 
 Before seeing if PhenoMapR scores stratify outcomes, let’s see if the
 primary and metastatic patients in the study show differences in
-outcomes.
+outcomes. Based on the **`PhenoMapR`** score distributions above, the
+metastatic population might be less adversely prognostic than normal.
 
 ``` r
 suppressPackageStartupMessages(library(survival))
 suppressPackageStartupMessages(library(survminer))
 # Unnamed vector: order matches strata (Met first, then Primary). Named palettes trigger scale warnings.
 pal_tumor <- c("darkred", "tan")  # Metastatic, Primary
-
 fit_primary <- survfit(Surv(survival_time, survival_event) ~ tumor_type, data = dat)
 lr_primary <- survdiff(Surv(survival_time, survival_event) ~ tumor_type, data = dat)
 pval_primary <- 1 - pchisq(lr_primary$chisq, 1)
@@ -206,22 +202,41 @@ ci_primary <- as.vector(exp(confint(cox_primary)))
 label_primary <- sprintf("p = %s\nHR = %.2f (95%% CI: %.2f-%.2f)",
   format.pval(pval_primary, digits = 2, eps = 0.001), hr_primary, ci_primary[1], ci_primary[2])
 max_time_primary <- max(dat$survival_time, na.rm = TRUE)
-ggsurvplot(fit_primary, data = dat, palette = pal_tumor, risk.table = FALSE,
-           title = "Survival by Primary vs Metastatic status",
-           xlab = "Time (years)", ylab = "Survival probability", legend.title = "Status",
-           legend.labs = c("Metastatic", "Primary"), legend = "right",
-           pval = label_primary, pval.coord = c(max_time_primary * 0.5, 0.95), pval.size = 3.5)
+
+suppressWarnings(ggsurvplot(
+  fit_primary, 
+  data = dat, 
+  palette = pal_tumor, 
+  risk.table = TRUE,
+  title = "Survival by Primary vs Metastatic status",
+  xlab = "Time (years)", 
+  ylab = "Survival probability",
+  legend = "right",  # Just position
+  legend.labs = c("Metastatic", "Primary"),
+  legend.title = "Status",  # This actually works in newer versions
+  pval = label_primary, 
+  pval.coord = c(max_time_primary * 0.5, 0.95), 
+  pval.size = 3.5
+))
 ```
+
+    ## Ignoring unknown labels:
+    ## • colour : "Status"
 
 ![](bulk-survival_files/figure-html/primary-vs-met-1.png)
 
 It seems like patients with metastatic disease trend towards worse
-outcomes but it’s not statistically significant.
+outcomes but it’s not statistically significant, in line with the
+results of the **`PhenoMapR`** score distributions in Section 2.
 
 ## 4. Primary tumors: PhenoMapR stratifies outcome
 
-Stratify primary samples by PhenoMapR score (high vs low median split)
-and show that the **Pancreatic** score stratifies survival.
+The weighted-sum scoring approach of **`PhenoMapR`** scores patients
+based on their overall expression signature skew towards more adversely
+or favorably prognostic signatures. This should theoretically be able to
+stratify patients in survival analysis. Here, we stratify primary
+samples by PhenoMapR score (high vs low median split) and show that the
+**`PhenoMapR`** score stratifies survival.
 
 ``` r
 # Unnamed vector: order matches strata (High first, then Low). Named palettes can trigger scale warnings.
@@ -237,23 +252,27 @@ pval_primary <- 1 - pchisq(lr_primary$chisq, 1)
 cox_primary <- coxph(Surv(survival_time, survival_event) ~ score_grp, data = dat_primary)
 hr_primary <- exp(coef(cox_primary))[1]
 ci_primary <- as.vector(exp(confint(cox_primary)))
-label_primary <- sprintf("p = %s\nHR = %.2f (95%% CI: %.2f-%.2f)",
+label_primary <- sprintf("p %s\nHR = %.2f (95%% CI: %.2f-%.2f)",
   format.pval(pval_primary, digits = 2, eps = 0.001), hr_primary, ci_primary[1], ci_primary[2])
 max_time_primary <- max(dat_primary$survival_time, na.rm = TRUE)
-ggsurvplot(fit_primary, data = dat_primary, palette = pal_km, risk.table = FALSE,
+ggsurvplot(fit_primary, data = dat_primary, palette = pal_km, risk.table = TRUE,
            title = "Survival by PhenoMapR score in Primary tumors",
-           xlab = "Time (years)", ylab = "Survival probability", legend.title = "PhenoMapR Score",
+           xlab = "Years", ylab = "Survival probability", legend.title = "PhenoMapR Score",
            legend.labs = c("High", "Low"), legend = "right",
            pval = label_primary, pval.coord = c(max_time_primary * 0.5, 0.95), pval.size = 3.5)
 ```
 
-![](bulk-survival_files/figure-html/km-primary-1.png)
+    ## Ignoring unknown labels:
+    ## • colour : "PhenoMapR Score"
+
+![](bulk-survival_files/figure-html/km-primary-1.png) Indeed, primary
+PAAD patients are significantly stratified by median **PhenoMapR**
+score.
 
 ## 5. Metastatic samples: PhenoMapR stratifies outcome
 
-Stratify metastatic samples by PhenoMapR score (high vs low median
-split) and show that the **Pancreatic_Metastasis** score stratifies
-survival in this subset.
+Stratify metastatic samples by **`PhenoMapR`** score (high vs low median
+split) and show that the score stratifies survival in this subset.
 
 ``` r
 dat_met <- dat[dat$tumor_type == "Met", ]
@@ -267,39 +286,44 @@ pval_met <- 1 - pchisq(lr_met$chisq, 1)
 cox_met <- coxph(Surv(survival_time, survival_event) ~ score_grp, data = dat_met)
 hr_met <- exp(coef(cox_met))[1]
 ci_met <- as.vector(exp(confint(cox_met)))
-label_met <- sprintf("p = %s\nHR = %.2f (95%% CI: %.2f-%.2f)",
+label_met <- sprintf("p %s\nHR = %.2f (95%% CI: %.2f-%.2f)",
   format.pval(pval_met, digits = 2, eps = 0.001), hr_met, ci_met[1], ci_met[2])
 max_time_met <- max(dat_met$survival_time, na.rm = TRUE)
-ggsurvplot(fit_met, data = dat_met, palette = pal_km, risk.table = FALSE,
+ggsurvplot(fit_met, data = dat_met, palette = pal_km, risk.table = TRUE,
            title = "Survival by PhenoMapR score in Metastatic Patients",
            xlab = "Time (years)", ylab = "Survival probability", legend.title = "PhenoMapR Score",
            legend.labs = c("High", "Low"), legend = "right",
            pval = label_met, pval.coord = c(max_time_met * 0.5, 0.95), pval.size = 3.5)
 ```
 
-![](bulk-survival_files/figure-html/km-metastatic-1.png)
+    ## Ignoring unknown labels:
+    ## • colour : "PhenoMapR Score"
+
+![](bulk-survival_files/figure-html/km-metastatic-1.png) Indeed,
+metastatic PAAD patients are significantly stratified by median
+**PhenoMapR** score.
 
 ## 6. Summary
 
-PhenoMapR can take a bulk expression dataset and assign prognostic risk
-scores and significantly stratify outcomes in both primary and
-metastatic disease in PAAD. In this case, we had access to outcomes
-annotations for the cohort but it is reasonable to assume many datasets
-profiled with bulk gene expression do not have outcomes data available
-or reported. In these cases, PhenoMapR can nominate samples that are on
-the extremes of the phenotype space (e.g. survival) and help define
-sample groupings.
+**`PhenoMapR`** can take a bulk expression dataset and assign prognostic
+risk scores which significantly stratify outcomes in both primary and
+metastatic disease in this example PAAD dataset. In this case, we had
+access to outcomes annotations for prognostic validation but it is
+reasonable to assume many datasets profiled with bulk gene expression do
+not have outcomes data available or reported. In these cases, as long as
+TCGA/PRECOG contain an appropriate reference signature, **`PhenoMapR`**
+can nominate samples that are on the extremes of the phenotype space
+(e.g. survival) and help define sample groupings.
 
 ## 7. References
 
-- **GSE205154**: Sears et al. Bulk RNA-Seq gene expression for 289
-  primary and metastatic PDAC samples. *Nature Cancer* (2025). [GEO:
-  GSE205154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE205154).
-- **PRECOG**: Benard B et al. PRECOG update: an augmented resource of
-  clinical outcome associations with gene expression for adult,
-  pediatric, and immunotherapy cohorts. *Nucleic Acids Research* (2025).
-  [precog.stanford.edu](https://precog.stanford.edu/); [PubMed:
-  40909678](https://pubmed.ncbi.nlm.nih.gov/40909678/).
+**\[1\]** Benard, B. A. et al. PRECOG update: an augmented resource of
+clinical outcome associations with gene expression for adult, pediatric,
+and immunotherapy cohorts. Nucleic Acids Res. 54, D1579–D1589 (2026).
+
+**\[2\]** Link, J. M. et al. Ongoing replication stress tolerance and
+clonal T cell responses distinguish liver and lung recurrence and
+outcomes in pancreatic cancer. Nat. Cancer 6, 123–144 (2025).
 
 ## Session Info
 
@@ -329,21 +353,24 @@ sessionInfo()
     ## 
     ## other attached packages:
     ## [1] survminer_0.5.2 ggpubr_0.6.3    survival_3.8-6  ggplot2_4.0.2  
-    ## [5] PhenoMapR_0.1.0
+    ## [5] patchwork_1.3.2 PhenoMapR_0.1.0
     ## 
     ## loaded via a namespace (and not attached):
-    ##  [1] sass_0.4.10        generics_0.1.4     tidyr_1.3.2        rstatix_0.7.3     
-    ##  [5] lattice_0.22-9     digest_0.6.39      magrittr_2.0.4     evaluate_1.0.5    
-    ##  [9] grid_4.5.3         RColorBrewer_1.1-3 fastmap_1.2.0      jsonlite_2.0.0    
-    ## [13] Matrix_1.7-4       backports_1.5.0    Formula_1.2-5      gridExtra_2.3     
-    ## [17] purrr_1.2.1        scales_1.4.0       textshaping_1.0.5  jquerylib_0.1.4   
-    ## [21] abind_1.4-8        cli_3.6.5          rlang_1.1.7        splines_4.5.3     
-    ## [25] withr_3.0.2        cachem_1.1.0       yaml_2.3.12        otel_0.2.0        
-    ## [29] tools_4.5.3        ggsignif_0.6.4     dplyr_1.2.0        broom_1.0.12      
-    ## [33] vctrs_0.7.1        R6_2.6.1           lifecycle_1.0.5    fs_1.6.7          
-    ## [37] car_3.1-5          htmlwidgets_1.6.4  ragg_1.5.1         pkgconfig_2.0.3   
-    ## [41] desc_1.4.3         pkgdown_2.2.0      pillar_1.11.1      bslib_0.10.0      
-    ## [45] gtable_0.3.6       glue_1.8.0         systemfonts_1.3.2  xfun_0.56         
-    ## [49] tibble_3.3.1       tidyselect_1.2.1   knitr_1.51         farver_2.1.2      
-    ## [53] htmltools_0.5.9    carData_3.0-6      rmarkdown_2.30     labeling_0.4.3    
-    ## [57] compiler_4.5.3     S7_0.2.1
+    ##  [1] gtable_0.3.6       xfun_0.56          bslib_0.10.0       htmlwidgets_1.6.4 
+    ##  [5] rstatix_0.7.3      gargle_1.6.1       lattice_0.22-9     vctrs_0.7.1       
+    ##  [9] tools_4.5.3        generics_0.1.4     curl_7.0.0         tibble_3.3.1      
+    ## [13] pkgconfig_2.0.3    Matrix_1.7-4       RColorBrewer_1.1-3 S7_0.2.1          
+    ## [17] desc_1.4.3         lifecycle_1.0.5    stringr_1.6.0      compiler_4.5.3    
+    ## [21] farver_2.1.2       textshaping_1.0.5  carData_3.0-6      litedown_0.9      
+    ## [25] htmltools_0.5.9    sass_0.4.10        yaml_2.3.12        Formula_1.2-5     
+    ## [29] pillar_1.11.1      pkgdown_2.2.0      car_3.1-5          jquerylib_0.1.4   
+    ## [33] tidyr_1.3.2        cachem_1.1.0       abind_1.4-8        commonmark_2.0.0  
+    ## [37] tidyselect_1.2.1   digest_0.6.39      stringi_1.8.7      dplyr_1.2.0       
+    ## [41] purrr_1.2.1        labeling_0.4.3     splines_4.5.3      fastmap_1.2.0     
+    ## [45] grid_4.5.3         cli_3.6.5          magrittr_2.0.4     broom_1.0.12      
+    ## [49] withr_3.0.2        scales_1.4.0       backports_1.5.0    googledrive_2.1.2 
+    ## [53] rmarkdown_2.30     httr_1.4.8         otel_0.2.0         ggtext_0.1.2      
+    ## [57] gridExtra_2.3      ggsignif_0.6.4     ragg_1.5.1         evaluate_1.0.5    
+    ## [61] knitr_1.51         markdown_2.0       rlang_1.1.7        gridtext_0.1.6    
+    ## [65] Rcpp_1.1.1         glue_1.8.0         xml2_1.5.2         jsonlite_2.0.0    
+    ## [69] R6_2.6.1           systemfonts_1.3.2  fs_1.6.7

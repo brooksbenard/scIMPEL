@@ -19,7 +19,7 @@ dataset to demonstrate how **`PhenoMapR`** generates phenotype
 signatures for use in downstream
 **[`PhenoMap()`](https://brooksbenard.github.io/PhenoMapR/reference/PhenoMap.md)**
 scoring. GSE253260 contains bulk RNA-seq data for 317 PDAC samples with
-survival and other clinical annotations.
+survival and other clinical annotations. [\[1\]](#ref1)
 
 This vignette uses the following pre-processed data:
 
@@ -785,11 +785,10 @@ metastatic stage patients.
 
 ## 10. References
 
-Nicole et al. Predictive genomic and transcriptomic analysis on
-endoscopic ultrasound-guided fine needle aspiration materials from
-primary pancreatic adenocarcinoma: a prospective multicentre study.
-**GSE253260**: [GEO:
-GSE253260](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE253260).
+**\[1\]** Nicolle, R. et al. Predictive genomic and transcriptomic
+analysis on endoscopic ultrasound-guided fine needle aspiration
+materials from primary pancreatic adenocarcinoma: A prospective
+multicentre study. EBioMedicine 108, 105339. (2024).
 
 ## Session Info
 
