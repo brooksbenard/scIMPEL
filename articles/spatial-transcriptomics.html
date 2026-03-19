@@ -120,14 +120,9 @@ spatial plots to show score and prognostic group across the slide.</p>
 <span></span>
 <span><span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_deauth.html" class="external-link">drive_deauth</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">rds_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">vignette_dir</span>, <span class="st">"HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed.rds"</span><span class="op">)</span></span>
-<span><span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_download.html" class="external-link">drive_download</a></span><span class="op">(</span><span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_id.html" class="external-link">as_id</a></span><span class="op">(</span><span class="st">"1HM0dBrQnaNsdm5mnq23aaQ2ILofJ0_vj"</span><span class="op">)</span>, <span class="va">rds_path</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## File downloaded:</span></span></code></pre>
-<pre><code><span><span class="co">## • <span style="color: #00BBBB;">HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed.rds</span></span></span>
-<span><span class="co">##   <span style="color: #555555;">&lt;id: 1HM0dBrQnaNsdm5mnq23aaQ2ILofJ0_vj&gt;</span></span></span></code></pre>
-<pre><code><span><span class="co">## Saved locally as:</span></span></code></pre>
-<pre><code><span><span class="co">## • <span style="color: #0000BB;">./HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed.rds</span></span></span></code></pre>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">has_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">rds_path</span><span class="op">)</span></span>
+<span><span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_download.html" class="external-link">drive_download</a></span><span class="op">(</span><span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_id.html" class="external-link">as_id</a></span><span class="op">(</span><span class="st">"1HM0dBrQnaNsdm5mnq23aaQ2ILofJ0_vj"</span><span class="op">)</span>, <span class="va">rds_path</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">has_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">rds_path</span><span class="op">)</span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/knitr/man/opts_chunk.html" class="external-link">opts_chunk</a></span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>eval <span class="op">=</span> <span class="va">has_data</span><span class="op">)</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="va">has_data</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Could not download spatial RDS from Google Drive."</span><span class="op">)</span></span>
@@ -157,7 +152,7 @@ spatial plots to show score and prognostic group across the slide.</p>
 <p>Apply PhenoMapR using the built-in PRECOG primary
 <strong>Pancreatic</strong> reference, then add scores to the Seurat
 object metadata.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span><span class="op">{</span></span>
 <span>  <span class="va">scores_spatial</span> <span class="op">&lt;-</span> <span class="fu">PhenoMapR</span><span class="fu">::</span><span class="fu"><a href="../reference/PhenoMap.html">PhenoMap</a></span><span class="op">(</span></span>
 <span>    expression <span class="op">=</span> <span class="va">seurat</span>,</span>
@@ -179,7 +174,7 @@ object metadata.</p>
 </h2>
 <p>Distribution of PhenoMapR (PRECOG Pancreatic) scores across
 spots.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_score_distribution.html">plot_score_distribution</a></span><span class="op">(</span></span>
 <span>  <span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">[[</span><span class="va">score_col</span><span class="op">]</span><span class="op">]</span>,</span>
 <span>  main <span class="op">=</span> <span class="st">"PRECOG Pancreatic score (spatial spots)"</span>,</span>
@@ -196,7 +191,7 @@ For HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed, cell types may be in a
 separate file from CytoSpace; we try to load a companion table and add
 <strong>CellType</strong> to the object if it is not already in
 <code>meta.data</code>.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># If CellType is missing, try a companion file (e.g. *_celltypes.csv or *_annotations.csv next to the RDS)</span></span>
 <span><span class="va">tried</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="st">"CellType"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
@@ -239,7 +234,7 @@ separate file from CytoSpace; we try to load a companion table and add
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="st">"CellType"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">tried</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Companion files tried: "</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="va">tried</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">", "</span><span class="op">)</span>, <span class="st">"; no match by cell ID."</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Prefer CellType; then any column with 2--100 discrete levels (e.g. orig.ident, clusters)</span></span>
 <span><span class="va">spatial_celltype_pal</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
 <span><span class="va">spatial_celltype_col</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
@@ -320,7 +315,7 @@ separate file from CytoSpace; we try to load a companion table and add
 </h2>
 <p>Label spots as Most Adverse (top 5%), Most Favorable (bottom 5%), or
 Other, then attach to metadata for spatial plotting.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scores_df</span> <span class="op">&lt;-</span> <span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"weighted_sum_score"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">)</span><span class="op">)</span>, drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
 <span><span class="va">groups</span> <span class="op">&lt;-</span> <span class="fu">PhenoMapR</span><span class="fu">::</span><span class="fu"><a href="../reference/define_prognostic_groups.html">define_prognostic_groups</a></span><span class="op">(</span><span class="va">scores_df</span>, percentile <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span><span class="va">seurat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.github.io/seurat-object/reference/AddMetaData.html" class="external-link">AddMetaData</a></span><span class="op">(</span><span class="va">seurat</span>, <span class="va">groups</span><span class="op">)</span><span class="op">)</span></span>
@@ -339,7 +334,7 @@ Other, then attach to metadata for spatial plotting.</p>
 (z-scaled for display), and <strong>5th percentile prognostic
 groups</strong> in spatial coordinates. High (red) scores indicate more
 adverse prognostic expression; low (blue) indicate more favorable.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressPackageStartupMessages</a></span><span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">coords</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span><span class="fu">Seurat</span><span class="fu">::</span><span class="fu"><a href="https://satijalab.github.io/seurat-object/reference/GetTissueCoordinates.html" class="external-link">GetTissueCoordinates</a></span><span class="op">(</span><span class="va">seurat</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -433,7 +428,7 @@ adverse prognostic expression; low (blue) indicate more favorable.</p>
 <div class="section level3">
 <h3 id="where-cell-types-are">Where cell types are<a class="anchor" aria-label="anchor" href="#where-cell-types-are"></a>
 </h3>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/exists.html" class="external-link">exists</a></span><span class="op">(</span><span class="st">"has_spatial_coords"</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="va">has_spatial_coords</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">spatial_df</span><span class="op">$</span><span class="va">celltype_plot</span><span class="op">)</span> <span class="op">&amp;&amp;</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">spatial_df</span><span class="op">$</span><span class="va">celltype_plot</span><span class="op">)</span><span class="op">)</span> <span class="op">&gt;=</span> <span class="fl">2L</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">ct_col</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/exists.html" class="external-link">exists</a></span><span class="op">(</span><span class="st">"spatial_df_celltype_col"</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">spatial_df_celltype_col</span><span class="op">)</span><span class="op">)</span> <span class="va">spatial_df_celltype_col</span> <span class="kw">else</span> <span class="va">spatial_celltype_col</span></span>
@@ -463,7 +458,7 @@ adverse prognostic expression; low (blue) indicate more favorable.</p>
 </h3>
 <p>Spatial map of PhenoMapR score (z-scaled for color gradient). Blue =
 more favorable, red = more adverse.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/exists.html" class="external-link">exists</a></span><span class="op">(</span><span class="st">"has_spatial_coords"</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="va">has_spatial_coords</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">score_vals</span> <span class="op">&lt;-</span> <span class="va">spatial_df</span><span class="op">$</span><span class="va">phenomapr_scaled</span></span>
 <span>  <span class="va">p1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">spatial_df</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">.data</span><span class="op">$</span><span class="va">row</span>, y <span class="op">=</span> <span class="op">-</span><span class="va">.data</span><span class="op">$</span><span class="va">col</span>, color <span class="op">=</span> <span class="va">score_vals</span>,</span>
@@ -493,7 +488,7 @@ more favorable, red = more adverse.</p>
 </h3>
 <p>Spatial map of prognostic groups: top 5% (Most Adverse), bottom 5%
 (Most Favorable), and the rest (Other).</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/exists.html" class="external-link">exists</a></span><span class="op">(</span><span class="st">"has_spatial_coords"</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="va">has_spatial_coords</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">group_col</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">pg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">spatial_df</span><span class="op">$</span><span class="va">prognostic_group</span><span class="op">)</span></span>
 <span>  <span class="va">df_other</span> <span class="op">&lt;-</span> <span class="va">spatial_df</span><span class="op">[</span><span class="va">pg</span> <span class="op">==</span> <span class="st">"Other"</span> <span class="op">|</span> <span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">pg</span><span class="op">)</span>, <span class="op">]</span></span>
@@ -534,7 +529,7 @@ visualize those in a second heatmap.</p>
 <div class="section level3">
 <h3 id="step-1-markers-for-adverse-vs--favorable-spots">Step 1: Markers for adverse vs. favorable spots<a class="anchor" aria-label="anchor" href="#step-1-markers-for-adverse-vs--favorable-spots"></a>
 </h3>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">markers</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
 <span><span class="va">assay_markers</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">group_col</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
@@ -577,14 +572,12 @@ visualize those in a second heatmap.</p>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Marker analysis returned no results. Check that Most Adverse and Most Favorable groups have enough cells."</span><span class="op">)</span></span>
 <span>  <span class="op">}</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<pre><code><span><span class="co">## Adverse markers (top 5):</span></span></code></pre>
 <pre><code><span><span class="co">##   p_val avg_log2FC pct_in_group pct_rest     gene p_adj</span></span>
 <span><span class="co">## 1     0   3.221594        0.829    0.100      MET     0</span></span>
 <span><span class="co">## 2     0   2.425253        0.870    0.159    MECOM     0</span></span>
 <span><span class="co">## 3     0   3.033991        0.916    0.210    ITGA2     0</span></span>
 <span><span class="co">## 4     0   2.679157        0.851    0.152 BAIAP2L1     0</span></span>
 <span><span class="co">## 5     0   2.662331        0.801    0.105    RASEF     0</span></span></code></pre>
-<pre><code><span><span class="co">## Favorable markers (top 5):</span></span></code></pre>
 <pre><code><span><span class="co">##   p_val avg_log2FC pct_in_group pct_rest     gene p_adj</span></span>
 <span><span class="co">## 1     0   4.271152        0.627    0.064    NRXN1     0</span></span>
 <span><span class="co">## 2     0   5.161995        0.626    0.066    RIMS2     0</span></span>
@@ -595,7 +588,7 @@ visualize those in a second heatmap.</p>
 <div class="section level3">
 <h3 id="step-2-heatmap-of-adverse-vs--favorable-markers">Step 2: Heatmap of adverse vs. favorable markers<a class="anchor" aria-label="anchor" href="#step-2-heatmap-of-adverse-vs--favorable-markers"></a>
 </h3>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/exists.html" class="external-link">exists</a></span><span class="op">(</span><span class="st">"markers"</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">markers</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">n_top</span> <span class="op">&lt;-</span> <span class="fl">15</span></span>
 <span>  <span class="va">expr</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
@@ -728,7 +721,7 @@ visualize those in a second heatmap.</p>
 </h3>
 <p>Each column is a cell type; the height is filled by the number of
 adverse (5th percentile) or favorable (5th percentile) cells.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">group_col</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">ct_col_bar</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/exists.html" class="external-link">exists</a></span><span class="op">(</span><span class="st">"spatial_df_celltype_col"</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">spatial_df_celltype_col</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="va">spatial_df_celltype_col</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">seurat</span><span class="op">@</span><span class="va">meta.data</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
@@ -791,12 +784,12 @@ adverse (5th percentile) or favorable (5th percentile) cells.</p>
 <p>For each combination of prognostic group and cell type (e.g. adverse
 ductal, favorable B cell), we find genes that are uniquely upregulated
 in that group vs. all other spots.</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">markers_by_ct</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
 <span><span class="va">ct_col_markers</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Step 3: Finding unique markers for adverse/favorable cell types...\n"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Step 3: Finding unique markers for adverse/favorable cell types...</span></span></code></pre>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">group_col</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Skipping: prognostic groups not defined (group_col is NULL).\n"</span><span class="op">)</span></span>
 <span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
@@ -923,10 +916,10 @@ in that group vs. all other spots.</p>
 <div class="section level3">
 <h3 id="step-4-heatmap-of-cell-type-specific-markers">Step 4: Heatmap of cell-type-specific markers<a class="anchor" aria-label="anchor" href="#step-4-heatmap-of-cell-type-specific-markers"></a>
 </h3>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Step 4: Heatmap of cell-type-specific markers...\n"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Step 4: Heatmap of cell-type-specific markers...</span></span></code></pre>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/exists.html" class="external-link">exists</a></span><span class="op">(</span><span class="st">"markers_by_ct"</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">markers_by_ct</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">markers_by_ct</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/exists.html" class="external-link">exists</a></span><span class="op">(</span><span class="st">"ct_col_markers"</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">ct_col_markers</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressPackageStartupMessages</a></span><span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="va">n_top_per_group</span> <span class="op">&lt;-</span> <span class="fl">5</span></span>
@@ -1039,7 +1032,7 @@ an updated resource of pan-cancer gene-level prognostic meta-z scores.
 <div class="section level2">
 <h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## R version 4.5.3 (2026-03-11)</span></span>
 <span><span class="co">## Platform: x86_64-pc-linux-gnu</span></span>

@@ -45,18 +45,7 @@ if (!dir.exists(vignette_dir)) dir.create(vignette_dir, recursive = TRUE, showWa
 googledrive::drive_deauth()
 rds_path <- file.path(vignette_dir, "HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed.rds")
 googledrive::drive_download(googledrive::as_id("1HM0dBrQnaNsdm5mnq23aaQ2ILofJ0_vj"), rds_path, overwrite = TRUE)
-```
 
-    ## File downloaded:
-
-    ## • HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed.rds
-    ##   <id: 1HM0dBrQnaNsdm5mnq23aaQ2ILofJ0_vj>
-
-    ## Saved locally as:
-
-    ## • ./HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed.rds
-
-``` r
 has_data <- file.exists(rds_path)
 knitr::opts_chunk$set(eval = has_data)
 if (!has_data) {
@@ -523,16 +512,12 @@ if (!is.null(group_col)) {
 }
 ```
 
-    ## Adverse markers (top 5):
-
     ##   p_val avg_log2FC pct_in_group pct_rest     gene p_adj
     ## 1     0   3.221594        0.829    0.100      MET     0
     ## 2     0   2.425253        0.870    0.159    MECOM     0
     ## 3     0   3.033991        0.916    0.210    ITGA2     0
     ## 4     0   2.679157        0.851    0.152 BAIAP2L1     0
     ## 5     0   2.662331        0.801    0.105    RASEF     0
-
-    ## Favorable markers (top 5):
 
     ##   p_val avg_log2FC pct_in_group pct_rest     gene p_adj
     ## 1     0   4.271152        0.627    0.064    NRXN1     0

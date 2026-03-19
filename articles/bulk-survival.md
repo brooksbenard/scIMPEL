@@ -43,17 +43,8 @@ googledrive::drive_download(googledrive::as_id("16P-rfXD734seGl_xxTQuSDGMStQk9G7
 bulk_mat <- readRDS("GSE205154_GPL20301_expression.rds")
 
 message("Expression: ", nrow(bulk_mat), " genes × ", ncol(bulk_mat), " samples")
-```
-
-    ## Expression: 38562 genes × 289 samples
-
-``` r
 message("Phenotype: ", nrow(pheno), " samples (Primary: ", sum(pheno$tumor_type == "Primary"), ", Met: ", sum(pheno$tumor_type == "Met"), ")")
-```
 
-    ## Phenotype: 289 samples (Primary: 218, Met: 71)
-
-``` r
 p_type <-  ggplot(pheno, aes(x = reorder(Tumor_Type, Tumor_Type, function(x) -length(x)),
                   fill = Tumor_Type)) +  # Add fill mapping
   geom_bar(color = "white", linewidth = 0.2) +
@@ -107,8 +98,6 @@ scores_primary <- PhenoMap(
 )
 ```
 
-    ## Detected input type: matrix
-
     ## 7376 genes used for scoring against Pancreatic
     ## Calculating scores...
     ## Completed scoring for Pancreatic
@@ -122,8 +111,6 @@ scores_met <- PhenoMap(
   verbose = TRUE
 )
 ```
-
-    ## Detected input type: matrix
 
     ## 2997 genes used for scoring against Pancreatic_Metastasis
     ## Calculating scores...
@@ -220,9 +207,6 @@ suppressWarnings(ggsurvplot(
 ))
 ```
 
-    ## Ignoring unknown labels:
-    ## • colour : "Status"
-
 ![](bulk-survival_files/figure-html/primary-vs-met-1.png)
 
 It seems like patients with metastatic disease trend towards worse
@@ -262,9 +246,6 @@ ggsurvplot(fit_primary, data = dat_primary, palette = pal_km, risk.table = TRUE,
            pval = label_primary, pval.coord = c(max_time_primary * 0.5, 0.95), pval.size = 3.5)
 ```
 
-    ## Ignoring unknown labels:
-    ## • colour : "PhenoMapR Score"
-
 ![](bulk-survival_files/figure-html/km-primary-1.png) Indeed, primary
 PAAD patients are significantly stratified by median **PhenoMapR**
 score.
@@ -295,9 +276,6 @@ ggsurvplot(fit_met, data = dat_met, palette = pal_km, risk.table = TRUE,
            legend.labs = c("High", "Low"), legend = "right",
            pval = label_met, pval.coord = c(max_time_met * 0.5, 0.95), pval.size = 3.5)
 ```
-
-    ## Ignoring unknown labels:
-    ## • colour : "PhenoMapR Score"
 
 ![](bulk-survival_files/figure-html/km-metastatic-1.png) Indeed,
 metastatic PAAD patients are significantly stratified by median

@@ -171,21 +171,7 @@ ref_custom <- suppressWarnings(derive_reference_from_bulk(
     verbose = TRUE
   )
 )
-```
 
-    ## Using 317 samples common between expression and phenotype
-
-    ## Cleaning gene symbols to approved HUGO IDs...
-
-    ## Maps last updated on: Sat Nov 16 10:35:32 2024
-
-    ## Expression looks like counts; applying log2(CPM+1)...
-
-    ## Cox PH: 3055 genes had NA z-scores (convergence or low variation)
-
-    ## Derived reference with 28858 genes
-
-``` r
 # Vizualize the gene z-score signature distribution
 PhenoMapR::plot_score_distribution(ref_custom)
 ```
@@ -225,8 +211,6 @@ scores_custom <- PhenoMap(
   verbose = TRUE
 )
 ```
-
-    ## Detected input type: matrix
 
     ## 1730 genes used for scoring against survival_z
     ## Calculating scores...
@@ -298,12 +282,12 @@ if (nrow(dat_sc) > 0) {
 
 ## 4. Survival anlaysis by PhenoMapR score assignment
 
-PhenoMapR scores samples based on the weighted-sum of a sample’s gene
-expression levels and the weights from the phenotype reference
+**`PhenoMapR`** scores samples based on the weighted-sum of a sample’s
+gene expression levels and the weights from the phenotype reference
 signature. Because the signature used to score samples in the dataset
 was derived from the expression associations with survival across the
-datasets, the PhenoMapR score should stratify outcomes. We perform
-Kaplan–Meier analysis using a PhenoMapR median split.
+datasets, the **`PhenoMapR`** score should stratify outcomes. We perform
+Kaplan–Meier analysis using a **`PhenoMapR`** median split.
 
 ``` r
 suppressPackageStartupMessages(library(survival))
@@ -360,16 +344,16 @@ if (nrow(dat_os) >= 10) {
 ```
 
 ![](custom-reference_files/figure-html/km-custom-1.png) The sample
-PhenoMapR scores successfully stratify outcomes across the cohort.
+**`PhenoMapR`** scores successfully stratify outcomes across the cohort.
 
 ## 5. Overall survival by disease stage
 
 As mentioned earlier (Section 1), this dataset contains patients with a
 range of disease stages, reflecting significant differences in
-prognostic risk that could influence the PhenoMapR score assignment.
-Before we test whether the PhenoMapR score is correlated with disease
-stage, we first confirm that the four different disease stages have
-significantly different overall survival results.
+prognostic risk that could influence the **`PhenoMapR`** score
+assignment. Before we test whether the **`PhenoMapR`** score is
+correlated with disease stage, we first confirm that the four different
+disease stages have significantly different overall survival results.
 
 ``` r
 suppressPackageStartupMessages(library(survival))
@@ -462,9 +446,9 @@ disease stages provide robust survival stratification.
 
 ## 6. Cohort-wide custom score distribution by disease stage
 
-To check if patients with a more adverse PhenoMapR score are enriched in
-patients with more aggressive disease, we plot the PhenoMapR score
-distribution across the four disease stage groups.
+To check if patients with a more adverse **`PhenoMapR`** score are
+enriched in patients with more aggressive disease, we plot the
+**`PhenoMapR`** score distribution across the four disease stage groups.
 
 ``` r
 suppressPackageStartupMessages(library(ggplot2))
@@ -523,11 +507,12 @@ ggplot(dat_hist, aes(x = stage_group, y = score_custom, fill = stage_group)) +
 
 ![](custom-reference_files/figure-html/custom-score-hist-1.png)
 Interestingly, it does not appear that any of the disease risk groups
-are enriched for favorable or adverse PhenoMapR scores. This suggests
-that PhenoMapR identifies potentially stage agnostic prognostic signals
-and might be able to refine the risk within each stage.
+are enriched for favorable or adverse **`PhenoMapR`** scores. This
+suggests that **`PhenoMapR`** identifies potentially stage agnostic
+prognostic signals and might be able to refine the risk within each
+stage.
 
-## 7. KM within each disease stage (stage-specific median split)
+## 7. Survival within each disease stage (stage-specific median split)
 
 We next ask whether the cohort-wide custom score stratifies survival
 **within** each disease stage. For each stage we use the **median of the
@@ -757,11 +742,6 @@ if (!requireNamespace("survminer", quietly = TRUE)) {
   }
 }
 ```
-
-    ## Maps last updated on: Sat Nov 16 10:35:32 2024
-    ## Maps last updated on: Sat Nov 16 10:35:32 2024
-    ## Maps last updated on: Sat Nov 16 10:35:32 2024
-    ## Maps last updated on: Sat Nov 16 10:35:32 2024
 
 ![](custom-reference_files/figure-html/stage-specific-custom-1.png) It
 appears that stage-specific **`PhenoMapR`** signature generation and
