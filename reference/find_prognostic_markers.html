@@ -68,6 +68,8 @@ available, else base R) and does not require Seurat.</p>
 <span>  <span class="va">group_labels</span>,</span>
 <span>  group_column <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cell_id_column <span class="op">=</span> <span class="st">"cell_id"</span>,</span>
+<span>  marker_scope <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"phenotype_groups"</span>, <span class="st">"cell_type_specific"</span><span class="op">)</span>,</span>
+<span>  cell_type_column <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  assay <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  slot <span class="op">=</span> <span class="st">"data"</span>,</span>
 <span>  test.use <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wilcox"</span>, <span class="st">"t"</span>, <span class="st">"roc"</span>, <span class="st">"negbinom"</span>, <span class="st">"poisson"</span>, <span class="st">"LR"</span><span class="op">)</span>,</span>
@@ -105,6 +107,20 @@ column containing <code>"Most Adverse"</code> / <code>"Most Favorable"</code> / 
 <dt id="arg-cell-id-column">cell_id_column<a class="anchor" aria-label="anchor" href="#arg-cell-id-column"></a></dt>
 <dd><p>If <code>group_labels</code> is a data.frame, the column
 name for cell/sample IDs (default <code>"cell_id"</code>).</p></dd>
+
+
+<dt id="arg-marker-scope">marker_scope<a class="anchor" aria-label="anchor" href="#arg-marker-scope"></a></dt>
+<dd><p>Either:</p><ul><li><p><code>"phenotype_groups"</code>: find markers for the adverse and favorable
+phenotype groups globally (cell type agnostic; default).</p></li>
+<li><p><code>"cell_type_specific"</code>: find markers separately within each
+cell type, comparing the adverse phenotype group vs the rest and the
+favorable phenotype group vs the rest, <em>within the same cell type</em>.</p></li>
+</ul></dd>
+
+
+<dt id="arg-cell-type-column">cell_type_column<a class="anchor" aria-label="anchor" href="#arg-cell-type-column"></a></dt>
+<dd><p>When <code>marker_scope = "cell_type_specific"</code>, the
+column in <code>group_labels</code> that contains cell type labels.</p></dd>
 
 
 <dt id="arg-assay">assay<a class="anchor" aria-label="anchor" href="#arg-assay"></a></dt>
@@ -156,7 +172,10 @@ the adverse (top score) group (vs rest).</p></li>
 <li><p><code>favorable_markers</code>: data.frame of genes that are markers of
 the favorable (bottom score) group (vs rest).</p></li>
 </ul><p>Each data.frame has columns: <code>gene</code>, <code>avg_log2FC</code>,
-<code>pct_in_group</code>, <code>pct_rest</code>, <code>p_val</code>, <code>p_adj</code>.</p>
+<code>pct_in_group</code>, <code>pct_rest</code>, <code>p_val</code>, <code>p_adj</code>.
+When <code>marker_scope = "cell_type_specific"</code>, the returned data.frames
+additionally include a <code>cell_type</code> column with the cell type for each
+marker result.</p>
     </div>
 
     <div class="section level2">

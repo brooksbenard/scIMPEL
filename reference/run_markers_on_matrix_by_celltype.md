@@ -1,0 +1,24 @@
+# Run marker detection on a matrix by cell type
+
+For each cell type, compute markers for:
+
+- Most Adverse within that cell type vs all other groups within that
+  cell type
+
+- Most Favorable within that cell type vs all other groups within that
+  cell type
+
+## Usage
+
+``` r
+run_markers_on_matrix_by_celltype(
+  mat,
+  group_vec,
+  cell_type_vec,
+  min.pct = 0.1,
+  logfc.threshold = 0.25,
+  pval_threshold = 0.05,
+  max_cells_per_ident = 5000L,
+  verbose = TRUE
+)
+```

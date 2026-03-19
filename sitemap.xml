@@ -31,6 +31,8 @@
 <url><loc>https://brooksbenard.github.io/PhenoMapR/reference/get_top_prognostic_genes.html</loc></url>
 <url><loc>https://brooksbenard.github.io/PhenoMapR/reference/ici.html</loc></url>
 <url><loc>https://brooksbenard.github.io/PhenoMapR/reference/index.html</loc></url>
+<url><loc>https://brooksbenard.github.io/PhenoMapR/reference/infer_cell_type_column.html</loc></url>
+<url><loc>https://brooksbenard.github.io/PhenoMapR/reference/infer_group_labels_columns.html</loc></url>
 <url><loc>https://brooksbenard.github.io/PhenoMapR/reference/is_likely_normalized.html</loc></url>
 <url><loc>https://brooksbenard.github.io/PhenoMapR/reference/list_cancer_types.html</loc></url>
 <url><loc>https://brooksbenard.github.io/PhenoMapR/reference/load_rds_fast.html</loc></url>
@@ -48,7 +50,9 @@
 <url><loc>https://brooksbenard.github.io/PhenoMapR/reference/process_seurat.html</loc></url>
 <url><loc>https://brooksbenard.github.io/PhenoMapR/reference/process_spatial_experiment.html</loc></url>
 <url><loc>https://brooksbenard.github.io/PhenoMapR/reference/resolve_group_labels.html</loc></url>
+<url><loc>https://brooksbenard.github.io/PhenoMapR/reference/resolve_labels_from_df.html</loc></url>
 <url><loc>https://brooksbenard.github.io/PhenoMapR/reference/run_markers_on_matrix.html</loc></url>
+<url><loc>https://brooksbenard.github.io/PhenoMapR/reference/run_markers_on_matrix_by_celltype.html</loc></url>
 <url><loc>https://brooksbenard.github.io/PhenoMapR/reference/standardize_findmarkers_output.html</loc></url>
 <url><loc>https://brooksbenard.github.io/PhenoMapR/reference/tcga.html</loc></url>
 <url><loc>https://brooksbenard.github.io/PhenoMapR/reference/validate_expression_axes_and_ids.html</loc></url>

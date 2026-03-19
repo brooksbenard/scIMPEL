@@ -15,6 +15,8 @@ find_prognostic_markers(
   group_labels,
   group_column = NULL,
   cell_id_column = "cell_id",
+  marker_scope = c("phenotype_groups", "cell_type_specific"),
+  cell_type_column = NULL,
   assay = NULL,
   slot = "data",
   test.use = c("wilcox", "t", "roc", "negbinom", "poisson", "LR"),
@@ -52,6 +54,22 @@ find_prognostic_markers(
 
   If `group_labels` is a data.frame, the column name for cell/sample IDs
   (default `"cell_id"`).
+
+- marker_scope:
+
+  Either:
+
+  - `"phenotype_groups"`: find markers for the adverse and favorable
+    phenotype groups globally (cell type agnostic; default).
+
+  - `"cell_type_specific"`: find markers separately within each cell
+    type, comparing the adverse phenotype group vs the rest and the
+    favorable phenotype group vs the rest, *within the same cell type*.
+
+- cell_type_column:
+
+  When `marker_scope = "cell_type_specific"`, the column in
+  `group_labels` that contains cell type labels.
 
 - assay:
 
@@ -108,7 +126,10 @@ A list with:
   favorable (bottom score) group (vs rest).
 
 Each data.frame has columns: `gene`, `avg_log2FC`, `pct_in_group`,
-`pct_rest`, `p_val`, `p_adj`.
+`pct_rest`, `p_val`, `p_adj`. When
+`marker_scope = "cell_type_specific"`, the returned data.frames
+additionally include a `cell_type` column with the cell type for each
+marker result.
 
 ## Examples
 

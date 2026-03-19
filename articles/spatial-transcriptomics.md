@@ -1023,7 +1023,7 @@ sessionInfo()
     ##  [52] gargle_1.6.1           withr_3.0.2            S7_0.2.1              
     ##  [55] fastSave_0.1.0         fastDummies_1.7.5      MASS_7.3-65           
     ##  [58] tools_4.5.3            lmtest_0.9-40          otel_0.2.0            
-    ##  [61] googledrive_2.1.2      httpuv_1.6.16          future.apply_1.20.2   
+    ##  [61] googledrive_2.1.2      httpuv_1.6.17          future.apply_1.20.2   
     ##  [64] goftest_1.2-3          glue_1.8.0             nlme_3.1-168          
     ##  [67] promises_1.5.0         grid_4.5.3             Rtsne_0.17            
     ##  [70] cluster_2.1.8.2        reshape2_1.4.5         generics_0.1.4        
@@ -1041,7 +1041,7 @@ sessionInfo()
     ## [106] tibble_3.3.1           cli_3.6.5              uwot_0.2.4            
     ## [109] xtable_1.8-8           reticulate_1.45.0      systemfonts_1.3.2     
     ## [112] jquerylib_0.1.4        Rcpp_1.1.1             globals_0.19.1        
-    ## [115] spatstat.random_3.4-4  png_0.1-9              spatstat.univar_3.1-6 
+    ## [115] spatstat.random_3.4-4  png_0.1-9              spatstat.univar_3.1-7 
     ## [118] parallel_4.5.3         pkgdown_2.2.0          presto_1.0.0          
     ## [121] dotCall64_1.2          listenv_0.10.1         viridisLite_0.4.3     
     ## [124] scales_1.4.0           ggridges_0.5.7         purrr_1.2.1           

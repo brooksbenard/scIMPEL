@@ -806,7 +806,7 @@ sessionInfo()
     ##  [58] S7_0.2.1               backports_1.5.0        carData_3.0-6         
     ##  [61] fastDummies_1.7.5      ggsignif_0.6.4         MASS_7.3-65           
     ##  [64] tools_4.5.3            lmtest_0.9-40          otel_0.2.0            
-    ##  [67] httpuv_1.6.16          future.apply_1.20.2    goftest_1.2-3         
+    ##  [67] httpuv_1.6.17          future.apply_1.20.2    goftest_1.2-3         
     ##  [70] glue_1.8.0             nlme_3.1-168           promises_1.5.0        
     ##  [73] grid_4.5.3             Rtsne_0.17             cluster_2.1.8.2       
     ##  [76] reshape2_1.4.5         generics_0.1.4         hdf5r_1.3.12          
@@ -824,7 +824,7 @@ sessionInfo()
     ## [112] cli_3.6.5              uwot_0.2.4             xtable_1.8-8          
     ## [115] reticulate_1.45.0      systemfonts_1.3.2      jquerylib_0.1.4       
     ## [118] Rcpp_1.1.1             spatstat.random_3.4-4  globals_0.19.1        
-    ## [121] png_0.1-9              spatstat.univar_3.1-6  parallel_4.5.3        
+    ## [121] png_0.1-9              spatstat.univar_3.1-7  parallel_4.5.3        
     ## [124] pkgdown_2.2.0          presto_1.0.0           dotCall64_1.2         
     ## [127] listenv_0.10.1         viridisLite_0.4.3      scales_1.4.0          
     ## [130] ggridges_0.5.7         purrr_1.2.1            rlang_1.1.7           
