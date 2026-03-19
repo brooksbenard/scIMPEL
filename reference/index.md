@@ -54,14 +54,14 @@ Derive reference z-scores from bulk expression and phenotype.
 - [`plot_reference_signature()`](https://brooksbenard.github.io/PhenoMapR/reference/plot_reference_signature.md)
   : Plot reference signature z-scores as a 1×N heatmap
 
-## Prognostic group analysis
+## Phenotype group analysis
 
 Define adverse/favorable groups and find marker genes.
 
-- [`define_prognostic_groups()`](https://brooksbenard.github.io/PhenoMapR/reference/define_prognostic_groups.md)
-  : Define Prognostic Groups (Top and Bottom Percentile)
-- [`find_prognostic_markers()`](https://brooksbenard.github.io/PhenoMapR/reference/find_prognostic_markers.md)
-  : Find Unique Marker Genes for Adverse and Favorable Prognostic Groups
+- [`define_phenotype_groups()`](https://brooksbenard.github.io/PhenoMapR/reference/define_phenotype_groups.md)
+  : Define Phenotype Groups (Top and Bottom Percentile)
+- [`find_phenotype_markers()`](https://brooksbenard.github.io/PhenoMapR/reference/find_phenotype_markers.md)
+  : Find Unique Marker Genes for Adverse and Favorable Phenotype Groups
 
 ## Visualization
 

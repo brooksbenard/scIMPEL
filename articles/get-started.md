@@ -346,7 +346,7 @@ scores_df <- PhenoMap(...)
 scores_df$score_zscore <- normalize_scores(scores_df[, 1])
 ```
 
-### Prognostic Groups and Marker Genes
+### Phenotype Groups and Marker Genes
 
 A major advantage of `PhenoMapR` is the ability to rank-order all
 samples/cells/locations based on their PhenoMap score. To help
@@ -354,33 +354,33 @@ characterize the samples/cells/spots that are most phenotypically
 relevant, we provide some high-level analysis functions:
 
 The
-**[`define_prognostic_groups()`](https://brooksbenard.github.io/PhenoMapR/reference/define_prognostic_groups.md)**
+**[`define_phenotype_groups()`](https://brooksbenard.github.io/PhenoMapR/reference/define_phenotype_groups.md)**
 function uses a heuristic threshold that defines the top and bottom n%
-prognostic cells per dataset (adverse = highest scores, favorable =
+phenotype cells per dataset (adverse = highest scores, favorable =
 lowest). This function defaults to selecting the top and bottom 5th
 percentile to label as “adverse” and “favoable”, however the user can
 dynamically set this threshold based on their desired stringency.
 
 The
-**[`find_prognostic_markers()`](https://brooksbenard.github.io/PhenoMapR/reference/find_prognostic_markers.md)**
+**[`find_phenotype_markers()`](https://brooksbenard.github.io/PhenoMapR/reference/find_phenotype_markers.md)**
 function takes the group labels from
-**[`define_prognostic_groups()`](https://brooksbenard.github.io/PhenoMapR/reference/define_prognostic_groups.md)**
+**[`define_phenotype_groups()`](https://brooksbenard.github.io/PhenoMapR/reference/define_phenotype_groups.md)**
 and finds unique marker genes for those populations using **Seurat’s
 FindMarkers** (requires Seurat):
 
 ``` r
 # Score and define groups (top 5% = adverse, bottom 5% = favorable)
 scores <- PhenoMap(seurat_obj, reference = "precog", cancer_type = "BRCA")
-groups <- define_prognostic_groups(scores, percentile = 0.05)
+groups <- define_phenotype_groups(scores, percentile = 0.05)
 
 # One group column per score; values: "adverse", "favorable", "other"
-table(groups$prognostic_group_weighted_sum_score_precog_BRCA)
+table(groups$phenotype_group_weighted_sum_score_precog_BRCA)
 
 # Find marker genes via Seurat::FindMarkers (adverse vs rest, favorable vs rest)
-markers <- find_prognostic_markers(
+markers <- find_phenotype_markers(
   seurat_obj,
   group_labels = groups,
-  group_column = "prognostic_group_weighted_sum_score_precog_BRCA",
+  group_column = "phenotype_group_weighted_sum_score_precog_BRCA",
   cell_id_column = "cell_id"
 )
 head(markers$adverse_markers)   # genes enriched in top 5% (worst prognosis)

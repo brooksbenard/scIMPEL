@@ -438,7 +438,7 @@ results of [Jolasun et
 al.](https://www.nature.com/articles/s41467-025-66162-4/figures/2). The
 majority of favorably scoring cells were Acinar and C cell populations.
 
-## Prognostic groups and marker genes
+## Phenotype groups and marker genes
 
 **`PhenoMapR`** provides some high-level analysis functions to help
 characterize the most phenotypically relevant cells. We define the “Most
@@ -448,13 +448,13 @@ favorable vs rest) using the original cell type annotation for context.
 
 ``` r
 scores_df <- meta[, c(score_tcga_col, score_precog_col), drop = FALSE]
-groups <- define_prognostic_groups(scores_df, percentile = 0.05, score_columns = score_precog_col)
-group_col <- grep("prognostic_group", names(groups), value = TRUE)[1]
+groups <- define_phenotype_groups(scores_df, percentile = 0.05, score_columns = score_precog_col)
+group_col <- grep("phenotype_group", names(groups), value = TRUE)[1]
 meta[[group_col]] <- groups[rownames(meta), group_col]
 
 markers <- NULL
 if (!is.na(group_col)) {
-  markers <- find_prognostic_markers(expr_mat, group_labels = meta[[group_col]], max_cells_per_ident = 5000L)
+  markers <- find_phenotype_markers(expr_mat, group_labels = meta[[group_col]], max_cells_per_ident = 5000L)
   if (!is.null(markers)) {
     message("Adverse markers (top 5):"); print(head(markers$adverse_markers, 5))
     message("Favorable markers (top 5):"); print(head(markers$favorable_markers, 5))

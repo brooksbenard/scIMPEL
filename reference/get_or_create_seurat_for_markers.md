@@ -1,6 +1,6 @@
-# Get existing Seurat object or create one from matrix/SCE; add prognostic group to metadata
+# Get existing Seurat object or create one from matrix/SCE; add phenotype group to metadata
 
-Get existing Seurat object or create one from matrix/SCE; add prognostic
+Get existing Seurat object or create one from matrix/SCE; add phenotype
 group to metadata
 
 ## Usage

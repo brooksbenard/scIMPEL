@@ -1,7 +1,7 @@
-# Find Unique Marker Genes for Adverse and Favorable Prognostic Groups
+# Find Unique Marker Genes for Adverse and Favorable Phenotype Groups
 
 Performs differential expression between the top (adverse) and bottom
-(favorable) prognostic groups versus the rest. For `Seurat` input, uses
+(favorable) phenotype groups versus the rest. For `Seurat` input, uses
 [`Seurat::FindMarkers`](https://satijalab.org/seurat/reference/FindMarkers.html).
 For matrix, `Matrix`, or `SingleCellExperiment` input, uses a
 Wilcoxon-based path (presto if available, else base R) and does not
@@ -10,7 +10,7 @@ require Seurat.
 ## Usage
 
 ``` r
-find_prognostic_markers(
+find_phenotype_markers(
   expression,
   group_labels,
   group_column = NULL,
@@ -42,7 +42,7 @@ find_prognostic_markers(
   Either a character vector of group labels (`"Most Adverse"`,
   `"Most Favorable"`, `"Other"`) in the same order as columns of
   `expression`, or a data.frame from
-  [`define_prognostic_groups()`](https://brooksbenard.github.io/PhenoMapR/reference/define_prognostic_groups.md)
+  [`define_phenotype_groups()`](https://brooksbenard.github.io/PhenoMapR/reference/define_phenotype_groups.md)
   (see `group_column`).
 
 - group_column:
@@ -105,7 +105,7 @@ find_prognostic_markers(
 
 - max_cells_per_ident:
 
-  When any prognostic group exceeds this many cells, subsample to this
+  When any phenotype group exceeds this many cells, subsample to this
   limit before FindMarkers (default 5000). Reduces memory for large
   objects. Set to `Inf` to disable.
 
@@ -136,11 +136,11 @@ marker result.
 ``` r
 if (FALSE) { # \dontrun{
 scores <- PhenoMap(seurat_obj, reference = "precog", cancer_type = "BRCA")
-groups <- define_prognostic_groups(scores, percentile = 0.05)
-markers <- find_prognostic_markers(
+groups <- define_phenotype_groups(scores, percentile = 0.05)
+markers <- find_phenotype_markers(
   seurat_obj,
   group_labels = groups,
-  group_column = "prognostic_group_weighted_sum_score_precog_BRCA",
+  group_column = "phenotype_group_weighted_sum_score_precog_BRCA",
   cell_id_column = "cell_id"
 )
 head(markers$adverse_markers)

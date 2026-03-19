@@ -1,4 +1,4 @@
-# Define Prognostic Groups (Top and Bottom Percentile)
+# Define Phenotype Groups (Top and Bottom Percentile)
 
 For each score column (dataset), labels cells as adverse (top
 percentile, highest scores), favorable (bottom percentile, lowest
@@ -7,14 +7,14 @@ scores), or middle.
 ## Usage
 
 ``` r
-define_prognostic_groups(scores, percentile = 0.05, score_columns = NULL)
+define_phenotype_groups(scores, percentile = 0.05, score_columns = NULL)
 ```
 
 ## Arguments
 
 - scores:
 
-  Data.frame of prognostic scores from `PhenoMap`. Rows = cells/samples,
+  Data.frame of phenotype scores from `PhenoMap`. Rows = cells/samples,
   columns = score variables (e.g. weighted_sum_score_precog_BRCA).
 
 - percentile:
@@ -32,7 +32,7 @@ A data.frame with:
 
 - `cell_id`: same as row names of `scores`
 
-- For each score column: a `prognostic_group_<name>` column with values
+- For each score column: a `phenotype_group_<name>` column with values
   `"Most Adverse"` (top percentile), `"Most Favorable"` (bottom
   percentile), or `"Other"`
 
@@ -41,7 +41,7 @@ A data.frame with:
 ``` r
 if (FALSE) { # \dontrun{
 scores <- PhenoMap(seurat_obj, reference = "precog", cancer_type = "BRCA")
-groups <- define_prognostic_groups(scores, percentile = 0.05)
-table(groups$prognostic_group_weighted_sum_score_precog_BRCA)
+groups <- define_phenotype_groups(scores, percentile = 0.05)
+table(groups$phenotype_group_weighted_sum_score_precog_BRCA)
 } # }
 ```
