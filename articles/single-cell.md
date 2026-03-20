@@ -33,7 +33,8 @@ suppressPackageStartupMessages(library(ggpubr))
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(Seurat))
 suppressPackageStartupMessages(library(patchwork))
-suppressPackageStartupMessages(library(pheatmap))
+suppressPackageStartupMessages(library(ComplexHeatmap))
+suppressPackageStartupMessages(library(circlize))
 
 options(googledrive_quiet = TRUE)
 googledrive::drive_deauth()
@@ -452,14 +453,18 @@ groups <- define_phenotype_groups(scores_df, percentile = 0.05, score_columns = 
 group_col <- grep("phenotype_group", names(groups), value = TRUE)[1]
 meta[[group_col]] <- groups[rownames(meta), group_col]
 
-markers <- NULL
-if (!is.na(group_col)) {
-  markers <- find_phenotype_markers(expr_mat, group_labels = meta[[group_col]], max_cells_per_ident = 5000L)
+  markers <- NULL
+
+  markers <- find_phenotype_markers(
+    expr_mat,
+    group_labels = meta[[group_col]],
+    pval_threshold = 0.05,
+    max_cells_per_ident = 5000L
+  )
   if (!is.null(markers)) {
     message("Adverse markers (top 5):"); print(head(markers$adverse_markers, 5))
     message("Favorable markers (top 5):"); print(head(markers$favorable_markers, 5))
   }
-}
 ```
 
     ##         gene avg_log2FC pct_in_group  pct_rest p_val p_adj
@@ -479,98 +484,30 @@ if (!is.na(group_col)) {
 ## Marker genes heatmap
 
 After identifying marker genes for the adverse and favorable
-**`PhenoMapR`** populations, we select the top genes and vizualize their
-relative expression levels across all cells in the dataset.
+**`PhenoMapR`** populations, we take up to **20** positive markers per
+tail with **FDR \< 0.05** and the **largest `avg_log2FC`** (same
+thresholds as the cell-type–specific heatmap). The helper
+**[`plot_phenotype_markers()`](https://brooksbenard.github.io/PhenoMapR/reference/plot_phenotype_markers.md)**
+subsets the expression matrix to those genes and the ordered cells, then
+applies **row-wise `scale`** only to that submatrix. **ComplexHeatmap**
+shows favorable-marker rows, then adverse-marker rows, with
+**`anno_mark`** for the top five genes in each block.
 
 ``` r
-  n_top <- 15
-  adverse_pos <- markers$adverse_markers[markers$adverse_markers$avg_log2FC > 0, ]
-  favorable_pos <- markers$favorable_markers[markers$favorable_markers$avg_log2FC > 0, ]
-  top_genes <- unique(c(
-    head(adverse_pos$gene[order(adverse_pos$p_adj)], n_top),
-    head(favorable_pos$gene[order(favorable_pos$p_adj)], n_top)
-  ))
-  top_genes <- top_genes[top_genes %in% rownames(expr_mat)]
-  if (length(top_genes) == 0) top_genes <- head(rownames(expr_mat), 20)
-
-  mat <- as.matrix(expr_mat[top_genes, , drop = FALSE])
-  mat_scaled <- t(scale(t(mat)))
-  mat_scaled[mat_scaled < -3] <- -3
-  mat_scaled[mat_scaled > 3] <- 3
-
-  ord <- order(meta[[score_precog_col]])
-  mat_scaled <- mat_scaled[, ord, drop = FALSE]
-  meta_ord <- meta[ord, ]
-
-  # Use raw (un-normalized) PhenoMapR scores for the heatmap annotation.
-  # Clip to a symmetric range so the color scale is centered at 0 (blue < 0, white = 0, red > 0).
-  create_diverging_palette <- function(values) {
-  # Get range
-  min_val <- min(values, na.rm = TRUE)
-  max_val <- max(values, na.rm = TRUE)
-  
-  # Determine breaks
-  if (min_val >= 0) {
-    # Only positive values
-    breaks <- seq(0, max_val, length.out = 100)
-    colors <- colorRampPalette(c("#F7F7F7", "#B2182B"))(100)
-  } else if (max_val <= 0) {
-    # Only negative values
-    breaks <- seq(min_val, 0, length.out = 100)
-    colors <- colorRampPalette(c("#2166AC", "#F7F7F7"))(100)
-  } else {
-    # Both positive and negative
-    # Make symmetric around 0 for balanced colors
-    abs_max <- max(abs(min_val), abs(max_val))
-    breaks <- seq(-abs_max, abs_max, length.out = 100)
-    colors <- colorRampPalette(c("#2166AC", "#F7F7F7", "#B2182B"))(100)
-  }
-  
-  list(breaks = breaks, colors = colors)
-} 
-# Create the palette
-score_palette <- create_diverging_palette(meta_ord[[score_precog_col]])
-
-ann_col <- data.frame(
-  `PhenoMapR score` = meta_ord[[score_precog_col]],
-  `Cell type` = factor(meta_ord$celltype_original),
-  `Prognostic group` = factor(meta_ord[[group_col]], levels = c("Most Adverse", "Other", "Most Favorable")),
-  check.names = FALSE
-)
-rownames(ann_col) <- colnames(mat_scaled)
-
-pal_group <- c(`Most Adverse` = "#B2182B", Other = "#F7F7F7", `Most Favorable` = "#2166AC")
-
-# Ensure alignment
-celltype_levels <- levels(meta_ord$celltype_original)
-pal_celltype <- pal_cells[celltype_levels]
-
-
-ann_colors <- list(
-  `PhenoMapR score` = score_palette$colors,  # Use the colors from your function
-  `Cell type` = pal_celltype,
-  `Prognostic group` = pal_group
-)
-
-heatmap_colors <- if (requireNamespace("paletteer", quietly = TRUE)) {
-  colorRampPalette(paletteer::paletteer_d("MexBrewer::Vendedora"))(100)
-} else {
-  colorRampPalette(c("#2166AC", "#F7F7F7", "#B2182B"))(100)
-}
-
-pheatmap::pheatmap(
-  mat_scaled,
-  scale = "none",
-  cluster_cols = FALSE,
-  cluster_rows = FALSE,
-  show_colnames = FALSE,
-  annotation_col = ann_col,
-  annotation_colors = ann_colors,
-  color = heatmap_colors,
-  breaks = seq(-3, 3, length.out = 101),
-  main = "Top adverse & favorable PhenoMapR marker genes",
-  fontsize_row = 8
-)
+  plot_phenotype_markers(
+    markers = markers,
+    expr_mat = expr_mat,
+    meta = meta,
+    cell_id_col = "Cell",
+    group_col = group_col,
+    score_col = score_precog_col,
+    celltype_col = "celltype_original",
+    celltype_palette = pal_cells,
+    heatmap_type = "global",
+    top_n_markers = 20L,
+    n_mark_labels = 5L,
+    p_adj_threshold = 0.05
+  )
 ```
 
 ![](single-cell_files/figure-html/heatmap-markers-1.png) It’s clear from
@@ -591,193 +528,50 @@ genes per cell type and phenotype bin in a heatmap that includes *all*
 cells, ordered by: 1) phenotype bin (Most Favorable, Other, Most
 Adverse), then 2) cell type, then 3) phenotype score.
 
+For the heatmap, we take up to **20** positive markers per cell type and
+phenotype tail with the **largest `avg_log2FC`**, restricting to genes
+that are **FDR-significant** (`p_adj` from Benjamini–Hochberg `< 0.05`).
+Rows follow the same column order: **Most Favorable** (each cell type),
+**Other** cells, **Most Adverse** (each cell type).
+**`plot_phenotype_markers(..., heatmap_type = "cell_type_specific")`**
+draws row splits between blocks; **`anno_mark`** labels the **top five**
+genes (by log2FC) within each (phenotype tail × cell type) group, with
+**cell type** and **phenotype** strips on the left.
+
 ``` r
-if (!is.na(group_col) && !is.null(group_col)) {
-  group_df <- data.frame(
-    cell_id = meta$Cell,
-    phenotype_group = meta[[group_col]],
-    cell_type = meta$celltype_original,
-    stringsAsFactors = FALSE
-  )
+group_df <- data.frame(
+  cell_id = meta$Cell,
+  phenotype_group = meta[[group_col]],
+  cell_type = meta$celltype_original,
+  stringsAsFactors = FALSE
+)
 
-  markers_ct <- find_phenotype_markers(
-    expr_mat,
-    group_labels = group_df,
-    group_column = "phenotype_group",
-    cell_id_column = "cell_id",
-    cell_type_column = "cell_type",
-    marker_scope = "cell_type_specific",
-    max_cells_per_ident = 5000L,
-    verbose = FALSE
-  )
+markers_ct <- find_phenotype_markers(
+  expr_mat,
+  group_labels = group_df,
+  group_column = "phenotype_group",
+  cell_id_column = "cell_id",
+  cell_type_column = "cell_type",
+  marker_scope = "cell_type_specific",
+  pval_threshold = 0.05,
+  max_cells_per_ident = 5000L,
+  verbose = FALSE
+)
 
-  n_top_ct <- 5L
-  if (!is.null(markers_ct) &&
-      nrow(markers_ct$adverse_markers) > 0 &&
-      nrow(markers_ct$favorable_markers) > 0) {
-
-    adverse_df <- markers_ct$adverse_markers
-    favorable_df <- markers_ct$favorable_markers
-
-    # Top heatmap markers: largest positive log2FC among genes with p_adj < 0.01
-    pick_top_markers <- function(df, n_keep, valid_genes) {
-      req <- c("gene", "avg_log2FC", "p_adj")
-      if (!all(req %in% names(df))) {
-        return(character(0))
-      }
-      df <- df[
-        is.finite(df$avg_log2FC) & df$avg_log2FC > 0 &
-          is.finite(df$p_adj) & df$p_adj < 0.01,
-        ,
-        drop = FALSE
-      ]
-      if (nrow(df) == 0) {
-        return(character(0))
-      }
-      df <- df[order(-df$avg_log2FC, df$p_adj), , drop = FALSE]
-      g <- head(df$gene, n_keep)
-      g[g %in% valid_genes]
-    }
-
-    gene_ids <- rownames(expr_mat)
-    ct_levels <- sort(unique(c(adverse_df$cell_type, favorable_df$cell_type)))
-
-    gene_info <- list()
-    for (ct in ct_levels) {
-      df_ct <- adverse_df[adverse_df$cell_type == ct, , drop = FALSE]
-      if (nrow(df_ct) > 0) {
-        top_genes <- pick_top_markers(df_ct, n_top_ct, gene_ids)
-        if (length(top_genes) > 0) {
-          gene_info[[length(gene_info) + 1]] <- data.frame(
-            gene = top_genes,
-            cell_type = ct,
-            phenotype_bin = "Most Adverse",
-            row_id = paste(ct, "Most Adverse", top_genes, sep = "__"),
-            stringsAsFactors = FALSE
-          )
-        }
-      }
-
-      df_ct <- favorable_df[favorable_df$cell_type == ct, , drop = FALSE]
-      if (nrow(df_ct) > 0) {
-        top_genes <- pick_top_markers(df_ct, n_top_ct, gene_ids)
-        if (length(top_genes) > 0) {
-          gene_info[[length(gene_info) + 1]] <- data.frame(
-            gene = top_genes,
-            cell_type = ct,
-            phenotype_bin = "Most Favorable",
-            row_id = paste(ct, "Most Favorable", top_genes, sep = "__"),
-            stringsAsFactors = FALSE
-          )
-        }
-      }
-    }
-
-    gene_info <- do.call(rbind, gene_info)
-    if (is.null(gene_info) || nrow(gene_info) == 0) {
-      message("No cell-type-specific phenotype marker genes selected; skipping heatmap.")
-    } else {
-      # Column ordering: phenotype bin -> cell type -> ordered by phenotype score
-      group_levels <- c("Most Favorable", "Other", "Most Adverse")
-      celltype_levels <- levels(factor(meta$celltype_original))
-      # Row ordering matches column grouping: phenotype bin -> cell type
-      gene_info$phenotype_bin <- factor(gene_info$phenotype_bin, levels = group_levels)
-      gene_info$cell_type <- factor(gene_info$cell_type, levels = celltype_levels)
-      gene_info <- gene_info[order(gene_info$phenotype_bin, gene_info$cell_type), , drop = FALSE]
-
-      block_key <- paste(as.character(gene_info$phenotype_bin), as.character(gene_info$cell_type), sep = "||")
-      block_sizes <- as.numeric(table(factor(block_key, levels = unique(block_key))))
-      gaps_row <- cumsum(block_sizes)
-      if (length(gaps_row) > 0) gaps_row <- gaps_row[-length(gaps_row)]
-
-      score_vec <- meta[[score_precog_col]]
-      group_vec <- meta[[group_col]]
-      ct_vec <- meta$celltype_original
-      cell_ids <- meta$Cell
-
-      cell_order <- character(0)
-      for (g in group_levels) {
-        for (ct in celltype_levels) {
-          idx <- which(group_vec == g & ct_vec == ct)
-          if (length(idx) == 0) next
-          idx <- idx[order(score_vec[idx], na.last = TRUE)]
-          cell_order <- c(cell_order, cell_ids[idx])
-        }
-      }
-      cell_order <- c(cell_order, setdiff(colnames(expr_mat), cell_order))
-      meta_idx <- match(cell_order, meta$Cell)
-
-      mat_raw <- as.matrix(expr_mat[gene_info$gene, cell_order, drop = FALSE])
-      rownames(mat_raw) <- make.unique(gene_info$gene)
-      mat_scaled <- t(scale(t(mat_raw)))
-      # mat_scaled[mat_scaled < -3] <- -3
-      # mat_scaled[mat_scaled > 3] <- 3
-
-      create_diverging_palette <- function(values) {
-        values <- as.numeric(values)
-        values[!is.finite(values)] <- NA_real_
-        if (all(is.na(values))) {
-          return(list(colors = colorRampPalette(c("#F7F7F7", "#B2182B"))(100)))
-        }
-        min_val <- min(values, na.rm = TRUE)
-        max_val <- max(values, na.rm = TRUE)
-        if (min_val >= 0) {
-          colors <- colorRampPalette(c("#F7F7F7", "#B2182B"))(100)
-        } else if (max_val <= 0) {
-          colors <- colorRampPalette(c("#2166AC", "#F7F7F7"))(100)
-        } else {
-          colors <- colorRampPalette(c("#2166AC", "#F7F7F7", "#B2182B"))(100)
-        }
-        list(colors = colors)
-      }
-
-      score_ann <- as.numeric(meta[[score_precog_col]][meta_idx])
-      score_ann[!is.finite(score_ann)] <- NA_real_
-      if (all(is.na(score_ann))) score_ann <- rep(0, length(score_ann))
-
-      score_palette_ct <- create_diverging_palette(score_ann)$colors
-      pal_group <- c(`Most Adverse` = "#B2182B", Other = "#F7F7F7", `Most Favorable` = "#2166AC")
-      pal_celltype_ct <- pal_cells[levels(factor(meta$celltype_original))]
-
-      ann_col_ct <- data.frame(
-        `PhenoMapR score` = score_ann,
-        `Cell type` = factor(meta$celltype_original[meta_idx], levels = levels(factor(meta$celltype_original))),
-        `Phenotype group` = factor(meta[[group_col]][meta_idx], levels = group_levels),
-        check.names = FALSE
-      )
-      rownames(ann_col_ct) <- cell_order
-
-      ann_colors_ct <- list(
-        `PhenoMapR score` = score_palette_ct,
-        `Cell type` = pal_celltype_ct,
-        `Phenotype group` = pal_group
-      )
-
-      heatmap_colors_ct <- if (requireNamespace("paletteer", quietly = TRUE)) {
-        colorRampPalette(paletteer::paletteer_d("MexBrewer::Vendedora"))(100)
-      } else {
-        colorRampPalette(c("#2166AC", "#F7F7F7", "#B2182B"))(100)
-      }
-
-      pheatmap::pheatmap(
-        mat_scaled,
-        scale = "none",
-        cluster_cols = FALSE,
-        cluster_rows = FALSE,
-        # gaps_row = gaps_row,
-        show_colnames = FALSE,
-        annotation_col = ann_col_ct,
-        annotation_colors = ann_colors_ct,
-        color = heatmap_colors_ct,
-        # breaks = seq(-3, 3, length.out = 101),
-        main = "Cell-type-specific phenotype marker genes",
-        fontsize_row = 4
-      )
-    }
-  } else {
-    message("Cell-type-specific marker results were empty; skipping heatmap.")
-  }
-}
+plot_phenotype_markers(
+  markers = markers_ct,
+  expr_mat = expr_mat,
+  meta = meta,
+  cell_id_col = "Cell",
+  group_col = group_col,
+  score_col = score_precog_col,
+  celltype_col = "celltype_original",
+  celltype_palette = pal_cells,
+  heatmap_type = "cell_type_specific",
+  top_n_markers = 20L,
+  n_mark_labels = 5L,
+  p_adj_threshold = 0.05
+)
 ```
 
 ![](single-cell_files/figure-html/celltype-specific-phenotype-markers-1.png)
@@ -979,56 +773,61 @@ sessionInfo()
     ## tzcode source: system (glibc)
     ## 
     ## attached base packages:
-    ## [1] stats     graphics  grDevices utils     datasets  methods   base     
+    ## [1] grid      stats     graphics  grDevices utils     datasets  methods  
+    ## [8] base     
     ## 
     ## other attached packages:
-    ##  [1] pheatmap_1.0.13    patchwork_1.3.2    Seurat_5.4.0       SeuratObject_5.3.0
-    ##  [5] sp_2.2-1           dplyr_1.2.0        ggpubr_0.6.3       ggplot2_4.0.2     
-    ##  [9] googledrive_2.1.2  PhenoMapR_0.1.0   
+    ##  [1] circlize_0.4.17       ComplexHeatmap_2.26.1 patchwork_1.3.2      
+    ##  [4] Seurat_5.4.0          SeuratObject_5.3.0    sp_2.2-1             
+    ##  [7] dplyr_1.2.0           ggpubr_0.6.3          ggplot2_4.0.2        
+    ## [10] googledrive_2.1.2     PhenoMapR_0.1.0      
     ## 
     ## loaded via a namespace (and not attached):
-    ##   [1] RColorBrewer_1.1-3     jsonlite_2.0.0         magrittr_2.0.4        
-    ##   [4] spatstat.utils_3.2-2   farver_2.1.2           rmarkdown_2.30        
-    ##   [7] fs_1.6.7               ragg_1.5.1             vctrs_0.7.1           
-    ##  [10] ROCR_1.0-12            spatstat.explore_3.7-0 paletteer_1.7.0       
-    ##  [13] rstatix_0.7.3          htmltools_0.5.9        curl_7.0.0            
-    ##  [16] broom_1.0.12           Formula_1.2-5          sass_0.4.10           
-    ##  [19] sctransform_0.4.3      parallelly_1.46.1      KernSmooth_2.23-26    
-    ##  [22] bslib_0.10.0           htmlwidgets_1.6.4      desc_1.4.3            
-    ##  [25] ica_1.0-3              plyr_1.8.9             plotly_4.12.0         
-    ##  [28] zoo_1.8-15             cachem_1.1.0           igraph_2.2.2          
-    ##  [31] mime_0.13              lifecycle_1.0.5        pkgconfig_2.0.3       
-    ##  [34] Matrix_1.7-4           R6_2.6.1               fastmap_1.2.0         
-    ##  [37] fitdistrplus_1.2-6     future_1.70.0          shiny_1.13.0          
-    ##  [40] digest_0.6.39          rematch2_2.1.2         tensor_1.5.1          
-    ##  [43] prismatic_1.1.2        RSpectra_0.16-2        irlba_2.3.7           
-    ##  [46] textshaping_1.0.5      labeling_0.4.3         progressr_0.18.0      
-    ##  [49] spatstat.sparse_3.1-0  mgcv_1.9-4             httr_1.4.8            
-    ##  [52] polyclip_1.10-7        abind_1.4-8            compiler_4.5.3        
-    ##  [55] gargle_1.6.1           bit64_4.6.0-1          withr_3.0.2           
-    ##  [58] S7_0.2.1               backports_1.5.0        carData_3.0-6         
-    ##  [61] fastDummies_1.7.5      ggsignif_0.6.4         MASS_7.3-65           
-    ##  [64] tools_4.5.3            lmtest_0.9-40          otel_0.2.0            
-    ##  [67] httpuv_1.6.17          future.apply_1.20.2    goftest_1.2-3         
-    ##  [70] glue_1.8.0             nlme_3.1-168           promises_1.5.0        
-    ##  [73] grid_4.5.3             Rtsne_0.17             cluster_2.1.8.2       
-    ##  [76] reshape2_1.4.5         generics_0.1.4         hdf5r_1.3.12          
-    ##  [79] gtable_0.3.6           spatstat.data_3.1-9    tidyr_1.3.2           
-    ##  [82] data.table_1.18.2.1    car_3.1-5              spatstat.geom_3.7-0   
-    ##  [85] RcppAnnoy_0.0.23       ggrepel_0.9.8          RANN_2.6.2            
-    ##  [88] pillar_1.11.1          stringr_1.6.0          spam_2.11-3           
-    ##  [91] RcppHNSW_0.6.0         later_1.4.8            splines_4.5.3         
-    ##  [94] lattice_0.22-9         bit_4.6.0              survival_3.8-6        
-    ##  [97] deldir_2.0-4           tidyselect_1.2.1       miniUI_0.1.2          
-    ## [100] pbapply_1.7-4          knitr_1.51             gridExtra_2.3         
-    ## [103] scattermore_1.2        xfun_0.56              matrixStats_1.5.0     
-    ## [106] stringi_1.8.7          lazyeval_0.2.2         yaml_2.3.12           
-    ## [109] evaluate_1.0.5         codetools_0.2-20       tibble_3.3.1          
-    ## [112] cli_3.6.5              uwot_0.2.4             xtable_1.8-8          
-    ## [115] reticulate_1.45.0      systemfonts_1.3.2      jquerylib_0.1.4       
-    ## [118] Rcpp_1.1.1             spatstat.random_3.4-4  globals_0.19.1        
-    ## [121] png_0.1-9              spatstat.univar_3.1-7  parallel_4.5.3        
-    ## [124] pkgdown_2.2.0          presto_1.0.0           dotCall64_1.2         
-    ## [127] listenv_0.10.1         viridisLite_0.4.3      scales_1.4.0          
-    ## [130] ggridges_0.5.7         purrr_1.2.1            rlang_1.1.7           
-    ## [133] cowplot_1.2.0
+    ##   [1] RcppAnnoy_0.0.23       splines_4.5.3          later_1.4.8           
+    ##   [4] tibble_3.3.1           polyclip_1.10-7        fastDummies_1.7.5     
+    ##   [7] lifecycle_1.0.5        rstatix_0.7.3          doParallel_1.0.17     
+    ##  [10] globals_0.19.1         lattice_0.22-9         hdf5r_1.3.12          
+    ##  [13] MASS_7.3-65            backports_1.5.0        magrittr_2.0.4        
+    ##  [16] plotly_4.12.0          sass_0.4.10            rmarkdown_2.30        
+    ##  [19] jquerylib_0.1.4        yaml_2.3.12            httpuv_1.6.17         
+    ##  [22] otel_0.2.0             sctransform_0.4.3      spam_2.11-3           
+    ##  [25] spatstat.sparse_3.1-0  reticulate_1.45.0      cowplot_1.2.0         
+    ##  [28] pbapply_1.7-4          RColorBrewer_1.1-3     abind_1.4-8           
+    ##  [31] Rtsne_0.17             presto_1.0.0           purrr_1.2.1           
+    ##  [34] BiocGenerics_0.56.0    IRanges_2.44.0         S4Vectors_0.48.0      
+    ##  [37] ggrepel_0.9.8          irlba_2.3.7            listenv_0.10.1        
+    ##  [40] spatstat.utils_3.2-2   goftest_1.2-3          RSpectra_0.16-2       
+    ##  [43] spatstat.random_3.4-4  fitdistrplus_1.2-6     parallelly_1.46.1     
+    ##  [46] pkgdown_2.2.0          codetools_0.2-20       tidyselect_1.2.1      
+    ##  [49] shape_1.4.6.1          farver_2.1.2           matrixStats_1.5.0     
+    ##  [52] stats4_4.5.3           spatstat.explore_3.7-0 jsonlite_2.0.0        
+    ##  [55] GetoptLong_1.1.0       progressr_0.18.0       Formula_1.2-5         
+    ##  [58] ggridges_0.5.7         survival_3.8-6         iterators_1.0.14      
+    ##  [61] systemfonts_1.3.2      foreach_1.5.2          tools_4.5.3           
+    ##  [64] ragg_1.5.1             ica_1.0-3              Rcpp_1.1.1            
+    ##  [67] glue_1.8.0             gridExtra_2.3          mgcv_1.9-4            
+    ##  [70] xfun_0.56              withr_3.0.2            fastmap_1.2.0         
+    ##  [73] digest_0.6.39          R6_2.6.1               mime_0.13             
+    ##  [76] textshaping_1.0.5      colorspace_2.1-2       scattermore_1.2       
+    ##  [79] tensor_1.5.1           spatstat.data_3.1-9    tidyr_1.3.2           
+    ##  [82] generics_0.1.4         data.table_1.18.2.1    httr_1.4.8            
+    ##  [85] htmlwidgets_1.6.4      uwot_0.2.4             pkgconfig_2.0.3       
+    ##  [88] gtable_0.3.6           lmtest_0.9-40          S7_0.2.1              
+    ##  [91] htmltools_0.5.9        carData_3.0-6          dotCall64_1.2         
+    ##  [94] clue_0.3-67            scales_1.4.0           png_0.1-9             
+    ##  [97] spatstat.univar_3.1-7  knitr_1.51             reshape2_1.4.5        
+    ## [100] rjson_0.2.23           nlme_3.1-168           curl_7.0.0            
+    ## [103] cachem_1.1.0           zoo_1.8-15             GlobalOptions_0.1.3   
+    ## [106] stringr_1.6.0          KernSmooth_2.23-26     parallel_4.5.3        
+    ## [109] miniUI_0.1.2           desc_1.4.3             pillar_1.11.1         
+    ## [112] vctrs_0.7.1            RANN_2.6.2             promises_1.5.0        
+    ## [115] car_3.1-5              xtable_1.8-8           cluster_2.1.8.2       
+    ## [118] evaluate_1.0.5         magick_2.9.1           cli_3.6.5             
+    ## [121] compiler_4.5.3         rlang_1.1.7            crayon_1.5.3          
+    ## [124] future.apply_1.20.2    ggsignif_0.6.4         labeling_0.4.3        
+    ## [127] plyr_1.8.9             fs_1.6.7               stringi_1.8.7         
+    ## [130] viridisLite_0.4.3      deldir_2.0-4           lazyeval_0.2.2        
+    ## [133] spatstat.geom_3.7-0    Matrix_1.7-4           RcppHNSW_0.6.0        
+    ## [136] bit64_4.6.0-1          future_1.70.0          shiny_1.13.0          
+    ## [139] ROCR_1.0-12            gargle_1.6.1           igraph_2.2.2          
+    ## [142] broom_1.0.12           bslib_0.10.0           bit_4.6.0

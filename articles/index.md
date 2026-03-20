@@ -12,7 +12,7 @@ Tutorials and worked examples with PhenoMapR.
 
 - [Scoring single-cell data with
   PhenoMapR](https://brooksbenard.github.io/PhenoMapR/articles/single-cell.md):
-- [Scoring spatial transcriptomics with
+- [Scoring spatial transcriptomics data with
   PhenoMapR](https://brooksbenard.github.io/PhenoMapR/articles/spatial-transcriptomics.md):
 - [Scoring bulk gene expression samples with
   PhenoMapR](https://brooksbenard.github.io/PhenoMapR/articles/bulk-survival.md):

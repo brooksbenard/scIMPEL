@@ -15,7 +15,8 @@ PhenoMap(
   group_by = NULL,
   assay = NULL,
   slot = "data",
-  verbose = TRUE
+  verbose = TRUE,
+  reference_sign = 1L
 )
 ```
 
@@ -77,17 +78,33 @@ PhenoMap(
 
   Logical. Print progress messages (default: TRUE)
 
+- reference_sign:
+
+  Multiply all reference gene z-scores by this value before the weighted
+  sum. Use `1` (default) or `-1` to flip the sign of resulting PhenoMap
+  scores without changing the reference matrix (e.g. if you want
+  positive scores to mean the opposite association). For custom
+  references from
+  [`derive_reference_from_bulk`](https://brooksbenard.github.io/PhenoMapR/reference/derive_reference_from_bulk.md),
+  prefer setting `binary_positive_reference` so the reference itself
+  matches your factor levels (first level = positive association when
+  `"first"`).
+
 ## Value
 
 A data.frame with samples/cells as rows and score columns. Column names
 follow pattern: `weighted_sum_score_{reference}_{cancer_type}`.
-**Directionality**: higher score = worse prognosis (adverse); lower
-score = better prognosis (favorable), matching positive reference z =
-worse survival. For Seurat/SCE objects, scoring may use only reference
-genes internally for memory efficiency. Always add scores to the **same
-(full) object** using `add_scores_to_seurat` or `add_scores_to_sce` so
-that all genes are retained for downstream analyses (e.g. cell type
-marker genes).
+**Directionality (built-in PRECOG/TCGA/ICI references)**: higher score =
+worse prognosis (adverse); lower score = better prognosis (favorable),
+matching positive reference z = worse survival. **Custom references**
+from
+[`derive_reference_from_bulk`](https://brooksbenard.github.io/PhenoMapR/reference/derive_reference_from_bulk.md)
+follow the sign convention you chose there (see
+`binary_positive_reference`) times `reference_sign`. For Seurat/SCE
+objects, scoring may use only reference genes internally for memory
+efficiency. Always add scores to the **same (full) object** using
+`add_scores_to_seurat` or `add_scores_to_sce` so that all genes are
+retained for downstream analyses (e.g. cell type marker genes).
 
 ## Examples
 

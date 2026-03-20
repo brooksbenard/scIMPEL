@@ -109,7 +109,8 @@ all samples in the dataset.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressPackageStartupMessages</a></span><span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressPackageStartupMessages</a></span><span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.org/seurat" class="external-link">Seurat</a></span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressPackageStartupMessages</a></span><span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressPackageStartupMessages</a></span><span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">pheatmap</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressPackageStartupMessages</a></span><span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/jokergoo/ComplexHeatmap" class="external-link">ComplexHeatmap</a></span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressPackageStartupMessages</a></span><span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/jokergoo/circlize" class="external-link">circlize</a></span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>googledrive_quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_deauth.html" class="external-link">drive_deauth</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -507,14 +508,18 @@ original cell type annotation for context.</p>
 <span><span class="va">group_col</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"phenotype_group"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">groups</span><span class="op">)</span>, value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
 <span><span class="va">meta</span><span class="op">[[</span><span class="va">group_col</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">groups</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">meta</span><span class="op">)</span>, <span class="va">group_col</span><span class="op">]</span></span>
 <span></span>
-<span><span class="va">markers</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">group_col</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">markers</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_phenotype_markers.html">find_phenotype_markers</a></span><span class="op">(</span><span class="va">expr_mat</span>, group_labels <span class="op">=</span> <span class="va">meta</span><span class="op">[[</span><span class="va">group_col</span><span class="op">]</span><span class="op">]</span>, max_cells_per_ident <span class="op">=</span> <span class="fl">5000L</span><span class="op">)</span></span>
+<span>  <span class="va">markers</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
+<span></span>
+<span>  <span class="va">markers</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_phenotype_markers.html">find_phenotype_markers</a></span><span class="op">(</span></span>
+<span>    <span class="va">expr_mat</span>,</span>
+<span>    group_labels <span class="op">=</span> <span class="va">meta</span><span class="op">[[</span><span class="va">group_col</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>    pval_threshold <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>    max_cells_per_ident <span class="op">=</span> <span class="fl">5000L</span></span>
+<span>  <span class="op">)</span></span>
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">markers</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Adverse markers (top 5):"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">markers</span><span class="op">$</span><span class="va">adverse_markers</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Favorable markers (top 5):"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">markers</span><span class="op">$</span><span class="va">favorable_markers</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="op">}</span></span>
-<span><span class="op">}</span></span></code></pre></div>
+<span>  <span class="op">}</span></span></code></pre></div>
 <pre><code><span><span class="co">##         gene avg_log2FC pct_in_group  pct_rest p_val p_adj</span></span>
 <span><span class="co">## 13     ISG15  1.3634979     93.17786 41.839197     0     0</span></span>
 <span><span class="co">## 34  AURKAIP1  0.8237655     93.83919 52.991236     0     0</span></span>
@@ -532,98 +537,31 @@ original cell type annotation for context.</p>
 <h2 id="marker-genes-heatmap">Marker genes heatmap<a class="anchor" aria-label="anchor" href="#marker-genes-heatmap"></a>
 </h2>
 <p>After identifying marker genes for the adverse and favorable
-<strong><code>PhenoMapR</code></strong> populations, we select the top
-genes and vizualize their relative expression levels across all cells in
-the dataset.</p>
+<strong><code>PhenoMapR</code></strong> populations, we take up to
+<strong>20</strong> positive markers per tail with <strong>FDR &lt;
+0.05</strong> and the <strong>largest <code>avg_log2FC</code></strong>
+(same thresholds as the cell-type–specific heatmap). The helper
+<strong><code><a href="../reference/plot_phenotype_markers.html">plot_phenotype_markers()</a></code></strong> subsets the
+expression matrix to those genes and the ordered cells, then applies
+<strong>row-wise <code>scale</code></strong> only to that submatrix.
+<strong>ComplexHeatmap</strong> shows favorable-marker rows, then
+adverse-marker rows, with <strong><code>anno_mark</code></strong> for
+the top five genes in each block.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span>  <span class="va">n_top</span> <span class="op">&lt;-</span> <span class="fl">15</span></span>
-<span>  <span class="va">adverse_pos</span> <span class="op">&lt;-</span> <span class="va">markers</span><span class="op">$</span><span class="va">adverse_markers</span><span class="op">[</span><span class="va">markers</span><span class="op">$</span><span class="va">adverse_markers</span><span class="op">$</span><span class="va">avg_log2FC</span> <span class="op">&gt;</span> <span class="fl">0</span>, <span class="op">]</span></span>
-<span>  <span class="va">favorable_pos</span> <span class="op">&lt;-</span> <span class="va">markers</span><span class="op">$</span><span class="va">favorable_markers</span><span class="op">[</span><span class="va">markers</span><span class="op">$</span><span class="va">favorable_markers</span><span class="op">$</span><span class="va">avg_log2FC</span> <span class="op">&gt;</span> <span class="fl">0</span>, <span class="op">]</span></span>
-<span>  <span class="va">top_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">adverse_pos</span><span class="op">$</span><span class="va">gene</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">adverse_pos</span><span class="op">$</span><span class="va">p_adj</span><span class="op">)</span><span class="op">]</span>, <span class="va">n_top</span><span class="op">)</span>,</span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">favorable_pos</span><span class="op">$</span><span class="va">gene</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">favorable_pos</span><span class="op">$</span><span class="va">p_adj</span><span class="op">)</span><span class="op">]</span>, <span class="va">n_top</span><span class="op">)</span></span>
-<span>  <span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="va">top_genes</span> <span class="op">&lt;-</span> <span class="va">top_genes</span><span class="op">[</span><span class="va">top_genes</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">expr_mat</span><span class="op">)</span><span class="op">]</span></span>
-<span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">top_genes</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span> <span class="va">top_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">expr_mat</span><span class="op">)</span>, <span class="fl">20</span><span class="op">)</span></span>
-<span></span>
-<span>  <span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">expr_mat</span><span class="op">[</span><span class="va">top_genes</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span><span class="op">)</span></span>
-<span>  <span class="va">mat_scaled</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/scale.html" class="external-link">scale</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="va">mat_scaled</span><span class="op">[</span><span class="va">mat_scaled</span> <span class="op">&lt;</span> <span class="op">-</span><span class="fl">3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">-</span><span class="fl">3</span></span>
-<span>  <span class="va">mat_scaled</span><span class="op">[</span><span class="va">mat_scaled</span> <span class="op">&gt;</span> <span class="fl">3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">3</span></span>
-<span></span>
-<span>  <span class="va">ord</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">meta</span><span class="op">[[</span><span class="va">score_precog_col</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
-<span>  <span class="va">mat_scaled</span> <span class="op">&lt;-</span> <span class="va">mat_scaled</span><span class="op">[</span>, <span class="va">ord</span>, drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
-<span>  <span class="va">meta_ord</span> <span class="op">&lt;-</span> <span class="va">meta</span><span class="op">[</span><span class="va">ord</span>, <span class="op">]</span></span>
-<span></span>
-<span>  <span class="co"># Use raw (un-normalized) PhenoMapR scores for the heatmap annotation.</span></span>
-<span>  <span class="co"># Clip to a symmetric range so the color scale is centered at 0 (blue &lt; 0, white = 0, red &gt; 0).</span></span>
-<span>  <span class="va">create_diverging_palette</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">values</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># Get range</span></span>
-<span>  <span class="va">min_val</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">values</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span>  <span class="va">max_val</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">values</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span>  </span>
-<span>  <span class="co"># Determine breaks</span></span>
-<span>  <span class="kw">if</span> <span class="op">(</span><span class="va">min_val</span> <span class="op">&gt;=</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="co"># Only positive values</span></span>
-<span>    <span class="va">breaks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">max_val</span>, length.out <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
-<span>    <span class="va">colors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#F7F7F7"</span>, <span class="st">"#B2182B"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span>
-<span>  <span class="op">}</span> <span class="kw">else</span> <span class="kw">if</span> <span class="op">(</span><span class="va">max_val</span> <span class="op">&lt;=</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="co"># Only negative values</span></span>
-<span>    <span class="va">breaks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="va">min_val</span>, <span class="fl">0</span>, length.out <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
-<span>    <span class="va">colors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#2166AC"</span>, <span class="st">"#F7F7F7"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span>
-<span>  <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span>    <span class="co"># Both positive and negative</span></span>
-<span>    <span class="co"># Make symmetric around 0 for balanced colors</span></span>
-<span>    <span class="va">abs_max</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">min_val</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">max_val</span><span class="op">)</span><span class="op">)</span></span>
-<span>    <span class="va">breaks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="va">abs_max</span>, <span class="va">abs_max</span>, length.out <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
-<span>    <span class="va">colors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#2166AC"</span>, <span class="st">"#F7F7F7"</span>, <span class="st">"#B2182B"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span>
-<span>  <span class="op">}</span></span>
-<span>  </span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>breaks <span class="op">=</span> <span class="va">breaks</span>, colors <span class="op">=</span> <span class="va">colors</span><span class="op">)</span></span>
-<span><span class="op">}</span> </span>
-<span><span class="co"># Create the palette</span></span>
-<span><span class="va">score_palette</span> <span class="op">&lt;-</span> <span class="fu">create_diverging_palette</span><span class="op">(</span><span class="va">meta_ord</span><span class="op">[[</span><span class="va">score_precog_col</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">ann_col</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  `PhenoMapR score` <span class="op">=</span> <span class="va">meta_ord</span><span class="op">[[</span><span class="va">score_precog_col</span><span class="op">]</span><span class="op">]</span>,</span>
-<span>  `Cell type` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">meta_ord</span><span class="op">$</span><span class="va">celltype_original</span><span class="op">)</span>,</span>
-<span>  `Prognostic group` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">meta_ord</span><span class="op">[[</span><span class="va">group_col</span><span class="op">]</span><span class="op">]</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Most Adverse"</span>, <span class="st">"Other"</span>, <span class="st">"Most Favorable"</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  check.names <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">ann_col</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mat_scaled</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">pal_group</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>`Most Adverse` <span class="op">=</span> <span class="st">"#B2182B"</span>, Other <span class="op">=</span> <span class="st">"#F7F7F7"</span>, `Most Favorable` <span class="op">=</span> <span class="st">"#2166AC"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Ensure alignment</span></span>
-<span><span class="va">celltype_levels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">meta_ord</span><span class="op">$</span><span class="va">celltype_original</span><span class="op">)</span></span>
-<span><span class="va">pal_celltype</span> <span class="op">&lt;-</span> <span class="va">pal_cells</span><span class="op">[</span><span class="va">celltype_levels</span><span class="op">]</span></span>
-<span></span>
-<span></span>
-<span><span class="va">ann_colors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  `PhenoMapR score` <span class="op">=</span> <span class="va">score_palette</span><span class="op">$</span><span class="va">colors</span>,  <span class="co"># Use the colors from your function</span></span>
-<span>  `Cell type` <span class="op">=</span> <span class="va">pal_celltype</span>,</span>
-<span>  `Prognostic group` <span class="op">=</span> <span class="va">pal_group</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">heatmap_colors</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"paletteer"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu">paletteer</span><span class="fu">::</span><span class="fu"><a href="https://emilhvitfeldt.github.io/paletteer/reference/paletteer_d.html" class="external-link">paletteer_d</a></span><span class="op">(</span><span class="st">"MexBrewer::Vendedora"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span>
-<span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#2166AC"</span>, <span class="st">"#F7F7F7"</span>, <span class="st">"#B2182B"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="fu">pheatmap</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span></span>
-<span>  <span class="va">mat_scaled</span>,</span>
-<span>  scale <span class="op">=</span> <span class="st">"none"</span>,</span>
-<span>  cluster_cols <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  cluster_rows <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  show_colnames <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  annotation_col <span class="op">=</span> <span class="va">ann_col</span>,</span>
-<span>  annotation_colors <span class="op">=</span> <span class="va">ann_colors</span>,</span>
-<span>  color <span class="op">=</span> <span class="va">heatmap_colors</span>,</span>
-<span>  breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">3</span>, <span class="fl">3</span>, length.out <span class="op">=</span> <span class="fl">101</span><span class="op">)</span>,</span>
-<span>  main <span class="op">=</span> <span class="st">"Top adverse &amp; favorable PhenoMapR marker genes"</span>,</span>
-<span>  fontsize_row <span class="op">=</span> <span class="fl">8</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span>  <span class="fu"><a href="../reference/plot_phenotype_markers.html">plot_phenotype_markers</a></span><span class="op">(</span></span>
+<span>    markers <span class="op">=</span> <span class="va">markers</span>,</span>
+<span>    expr_mat <span class="op">=</span> <span class="va">expr_mat</span>,</span>
+<span>    meta <span class="op">=</span> <span class="va">meta</span>,</span>
+<span>    cell_id_col <span class="op">=</span> <span class="st">"Cell"</span>,</span>
+<span>    group_col <span class="op">=</span> <span class="va">group_col</span>,</span>
+<span>    score_col <span class="op">=</span> <span class="va">score_precog_col</span>,</span>
+<span>    celltype_col <span class="op">=</span> <span class="st">"celltype_original"</span>,</span>
+<span>    celltype_palette <span class="op">=</span> <span class="va">pal_cells</span>,</span>
+<span>    heatmap_type <span class="op">=</span> <span class="st">"global"</span>,</span>
+<span>    top_n_markers <span class="op">=</span> <span class="fl">20L</span>,</span>
+<span>    n_mark_labels <span class="op">=</span> <span class="fl">5L</span>,</span>
+<span>    p_adj_threshold <span class="op">=</span> <span class="fl">0.05</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
 <p><img src="single-cell_files/figure-html/heatmap-markers-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;">
 It’s clear from the heatmap that the cell type driving the favorable
 prognostic signal is the Acinar cell type. Cell-type specific marker
@@ -642,193 +580,53 @@ types and other phenotype groups). We visualize the top marker genes per
 cell type and phenotype bin in a heatmap that includes <em>all</em>
 cells, ordered by: 1) phenotype bin (Most Favorable, Other, Most
 Adverse), then 2) cell type, then 3) phenotype score.</p>
+<p>For the heatmap, we take up to <strong>20</strong> positive markers
+per cell type and phenotype tail with the <strong>largest
+<code>avg_log2FC</code></strong>, restricting to genes that are
+<strong>FDR-significant</strong> (<code>p_adj</code> from
+Benjamini–Hochberg <code>&lt; 0.05</code>). Rows follow the same column
+order: <strong>Most Favorable</strong> (each cell type),
+<strong>Other</strong> cells, <strong>Most Adverse</strong> (each cell
+type).
+<strong><code>plot_phenotype_markers(..., heatmap_type = "cell_type_specific")</code></strong>
+draws row splits between blocks; <strong><code>anno_mark</code></strong>
+labels the <strong>top five</strong> genes (by log2FC) within each
+(phenotype tail × cell type) group, with <strong>cell type</strong> and
+<strong>phenotype</strong> strips on the left.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">group_col</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">group_col</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">group_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>    cell_id <span class="op">=</span> <span class="va">meta</span><span class="op">$</span><span class="va">Cell</span>,</span>
-<span>    phenotype_group <span class="op">=</span> <span class="va">meta</span><span class="op">[[</span><span class="va">group_col</span><span class="op">]</span><span class="op">]</span>,</span>
-<span>    cell_type <span class="op">=</span> <span class="va">meta</span><span class="op">$</span><span class="va">celltype_original</span>,</span>
-<span>    stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span>  <span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">group_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  cell_id <span class="op">=</span> <span class="va">meta</span><span class="op">$</span><span class="va">Cell</span>,</span>
+<span>  phenotype_group <span class="op">=</span> <span class="va">meta</span><span class="op">[[</span><span class="va">group_col</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>  cell_type <span class="op">=</span> <span class="va">meta</span><span class="op">$</span><span class="va">celltype_original</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span>  <span class="va">markers_ct</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_phenotype_markers.html">find_phenotype_markers</a></span><span class="op">(</span></span>
-<span>    <span class="va">expr_mat</span>,</span>
-<span>    group_labels <span class="op">=</span> <span class="va">group_df</span>,</span>
-<span>    group_column <span class="op">=</span> <span class="st">"phenotype_group"</span>,</span>
-<span>    cell_id_column <span class="op">=</span> <span class="st">"cell_id"</span>,</span>
-<span>    cell_type_column <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
-<span>    marker_scope <span class="op">=</span> <span class="st">"cell_type_specific"</span>,</span>
-<span>    max_cells_per_ident <span class="op">=</span> <span class="fl">5000L</span>,</span>
-<span>    verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span>  <span class="op">)</span></span>
+<span><span class="va">markers_ct</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_phenotype_markers.html">find_phenotype_markers</a></span><span class="op">(</span></span>
+<span>  <span class="va">expr_mat</span>,</span>
+<span>  group_labels <span class="op">=</span> <span class="va">group_df</span>,</span>
+<span>  group_column <span class="op">=</span> <span class="st">"phenotype_group"</span>,</span>
+<span>  cell_id_column <span class="op">=</span> <span class="st">"cell_id"</span>,</span>
+<span>  cell_type_column <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>  marker_scope <span class="op">=</span> <span class="st">"cell_type_specific"</span>,</span>
+<span>  pval_threshold <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  max_cells_per_ident <span class="op">=</span> <span class="fl">5000L</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span>  <span class="va">n_top_ct</span> <span class="op">&lt;-</span> <span class="fl">5L</span></span>
-<span>  <span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">markers_ct</span><span class="op">)</span> <span class="op">&amp;&amp;</span></span>
-<span>      <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">markers_ct</span><span class="op">$</span><span class="va">adverse_markers</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span> <span class="op">&amp;&amp;</span></span>
-<span>      <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">markers_ct</span><span class="op">$</span><span class="va">favorable_markers</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
-<span></span>
-<span>    <span class="va">adverse_df</span> <span class="op">&lt;-</span> <span class="va">markers_ct</span><span class="op">$</span><span class="va">adverse_markers</span></span>
-<span>    <span class="va">favorable_df</span> <span class="op">&lt;-</span> <span class="va">markers_ct</span><span class="op">$</span><span class="va">favorable_markers</span></span>
-<span></span>
-<span>    <span class="co"># Top heatmap markers: largest positive log2FC among genes with p_adj &lt; 0.01</span></span>
-<span>    <span class="va">pick_top_markers</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span>, <span class="va">n_keep</span>, <span class="va">valid_genes</span><span class="op">)</span> <span class="op">{</span></span>
-<span>      <span class="va">req</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gene"</span>, <span class="st">"avg_log2FC"</span>, <span class="st">"p_adj"</span><span class="op">)</span></span>
-<span>      <span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">req</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>        <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
-<span>      <span class="op">}</span></span>
-<span>      <span class="va">df</span> <span class="op">&lt;-</span> <span class="va">df</span><span class="op">[</span></span>
-<span>        <span class="fu"><a href="https://rdrr.io/r/base/is.finite.html" class="external-link">is.finite</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">avg_log2FC</span><span class="op">)</span> <span class="op">&amp;</span> <span class="va">df</span><span class="op">$</span><span class="va">avg_log2FC</span> <span class="op">&gt;</span> <span class="fl">0</span> <span class="op">&amp;</span></span>
-<span>          <span class="fu"><a href="https://rdrr.io/r/base/is.finite.html" class="external-link">is.finite</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">p_adj</span><span class="op">)</span> <span class="op">&amp;</span> <span class="va">df</span><span class="op">$</span><span class="va">p_adj</span> <span class="op">&lt;</span> <span class="fl">0.01</span>,</span>
-<span>        ,</span>
-<span>        drop <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span>      <span class="op">]</span></span>
-<span>      <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
-<span>        <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
-<span>      <span class="op">}</span></span>
-<span>      <span class="va">df</span> <span class="op">&lt;-</span> <span class="va">df</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">df</span><span class="op">$</span><span class="va">avg_log2FC</span>, <span class="va">df</span><span class="op">$</span><span class="va">p_adj</span><span class="op">)</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
-<span>      <span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">gene</span>, <span class="va">n_keep</span><span class="op">)</span></span>
-<span>      <span class="va">g</span><span class="op">[</span><span class="va">g</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">valid_genes</span><span class="op">]</span></span>
-<span>    <span class="op">}</span></span>
-<span></span>
-<span>    <span class="va">gene_ids</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">expr_mat</span><span class="op">)</span></span>
-<span>    <span class="va">ct_levels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">adverse_df</span><span class="op">$</span><span class="va">cell_type</span>, <span class="va">favorable_df</span><span class="op">$</span><span class="va">cell_type</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span>    <span class="va">gene_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
-<span>    <span class="kw">for</span> <span class="op">(</span><span class="va">ct</span> <span class="kw">in</span> <span class="va">ct_levels</span><span class="op">)</span> <span class="op">{</span></span>
-<span>      <span class="va">df_ct</span> <span class="op">&lt;-</span> <span class="va">adverse_df</span><span class="op">[</span><span class="va">adverse_df</span><span class="op">$</span><span class="va">cell_type</span> <span class="op">==</span> <span class="va">ct</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
-<span>      <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df_ct</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
-<span>        <span class="va">top_genes</span> <span class="op">&lt;-</span> <span class="fu">pick_top_markers</span><span class="op">(</span><span class="va">df_ct</span>, <span class="va">n_top_ct</span>, <span class="va">gene_ids</span><span class="op">)</span></span>
-<span>        <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">top_genes</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
-<span>          <span class="va">gene_info</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">gene_info</span><span class="op">)</span> <span class="op">+</span> <span class="fl">1</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>            gene <span class="op">=</span> <span class="va">top_genes</span>,</span>
-<span>            cell_type <span class="op">=</span> <span class="va">ct</span>,</span>
-<span>            phenotype_bin <span class="op">=</span> <span class="st">"Most Adverse"</span>,</span>
-<span>            row_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">ct</span>, <span class="st">"Most Adverse"</span>, <span class="va">top_genes</span>, sep <span class="op">=</span> <span class="st">"__"</span><span class="op">)</span>,</span>
-<span>            stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">}</span></span>
-<span>      <span class="op">}</span></span>
-<span></span>
-<span>      <span class="va">df_ct</span> <span class="op">&lt;-</span> <span class="va">favorable_df</span><span class="op">[</span><span class="va">favorable_df</span><span class="op">$</span><span class="va">cell_type</span> <span class="op">==</span> <span class="va">ct</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
-<span>      <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df_ct</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
-<span>        <span class="va">top_genes</span> <span class="op">&lt;-</span> <span class="fu">pick_top_markers</span><span class="op">(</span><span class="va">df_ct</span>, <span class="va">n_top_ct</span>, <span class="va">gene_ids</span><span class="op">)</span></span>
-<span>        <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">top_genes</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
-<span>          <span class="va">gene_info</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">gene_info</span><span class="op">)</span> <span class="op">+</span> <span class="fl">1</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>            gene <span class="op">=</span> <span class="va">top_genes</span>,</span>
-<span>            cell_type <span class="op">=</span> <span class="va">ct</span>,</span>
-<span>            phenotype_bin <span class="op">=</span> <span class="st">"Most Favorable"</span>,</span>
-<span>            row_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">ct</span>, <span class="st">"Most Favorable"</span>, <span class="va">top_genes</span>, sep <span class="op">=</span> <span class="st">"__"</span><span class="op">)</span>,</span>
-<span>            stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">}</span></span>
-<span>      <span class="op">}</span></span>
-<span>    <span class="op">}</span></span>
-<span></span>
-<span>    <span class="va">gene_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">gene_info</span><span class="op">)</span></span>
-<span>    <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">gene_info</span><span class="op">)</span> <span class="op">||</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">gene_info</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
-<span>      <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"No cell-type-specific phenotype marker genes selected; skipping heatmap."</span><span class="op">)</span></span>
-<span>    <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span>      <span class="co"># Column ordering: phenotype bin -&gt; cell type -&gt; ordered by phenotype score</span></span>
-<span>      <span class="va">group_levels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Most Favorable"</span>, <span class="st">"Other"</span>, <span class="st">"Most Adverse"</span><span class="op">)</span></span>
-<span>      <span class="va">celltype_levels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">meta</span><span class="op">$</span><span class="va">celltype_original</span><span class="op">)</span><span class="op">)</span></span>
-<span>      <span class="co"># Row ordering matches column grouping: phenotype bin -&gt; cell type</span></span>
-<span>      <span class="va">gene_info</span><span class="op">$</span><span class="va">phenotype_bin</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">gene_info</span><span class="op">$</span><span class="va">phenotype_bin</span>, levels <span class="op">=</span> <span class="va">group_levels</span><span class="op">)</span></span>
-<span>      <span class="va">gene_info</span><span class="op">$</span><span class="va">cell_type</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">gene_info</span><span class="op">$</span><span class="va">cell_type</span>, levels <span class="op">=</span> <span class="va">celltype_levels</span><span class="op">)</span></span>
-<span>      <span class="va">gene_info</span> <span class="op">&lt;-</span> <span class="va">gene_info</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">gene_info</span><span class="op">$</span><span class="va">phenotype_bin</span>, <span class="va">gene_info</span><span class="op">$</span><span class="va">cell_type</span><span class="op">)</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
-<span></span>
-<span>      <span class="va">block_key</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">gene_info</span><span class="op">$</span><span class="va">phenotype_bin</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">gene_info</span><span class="op">$</span><span class="va">cell_type</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"||"</span><span class="op">)</span></span>
-<span>      <span class="va">block_sizes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">block_key</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">block_key</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span>      <span class="va">gaps_row</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="va">block_sizes</span><span class="op">)</span></span>
-<span>      <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">gaps_row</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="va">gaps_row</span> <span class="op">&lt;-</span> <span class="va">gaps_row</span><span class="op">[</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">gaps_row</span><span class="op">)</span><span class="op">]</span></span>
-<span></span>
-<span>      <span class="va">score_vec</span> <span class="op">&lt;-</span> <span class="va">meta</span><span class="op">[[</span><span class="va">score_precog_col</span><span class="op">]</span><span class="op">]</span></span>
-<span>      <span class="va">group_vec</span> <span class="op">&lt;-</span> <span class="va">meta</span><span class="op">[[</span><span class="va">group_col</span><span class="op">]</span><span class="op">]</span></span>
-<span>      <span class="va">ct_vec</span> <span class="op">&lt;-</span> <span class="va">meta</span><span class="op">$</span><span class="va">celltype_original</span></span>
-<span>      <span class="va">cell_ids</span> <span class="op">&lt;-</span> <span class="va">meta</span><span class="op">$</span><span class="va">Cell</span></span>
-<span></span>
-<span>      <span class="va">cell_order</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
-<span>      <span class="kw">for</span> <span class="op">(</span><span class="va">g</span> <span class="kw">in</span> <span class="va">group_levels</span><span class="op">)</span> <span class="op">{</span></span>
-<span>        <span class="kw">for</span> <span class="op">(</span><span class="va">ct</span> <span class="kw">in</span> <span class="va">celltype_levels</span><span class="op">)</span> <span class="op">{</span></span>
-<span>          <span class="va">idx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">group_vec</span> <span class="op">==</span> <span class="va">g</span> <span class="op">&amp;</span> <span class="va">ct_vec</span> <span class="op">==</span> <span class="va">ct</span><span class="op">)</span></span>
-<span>          <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">idx</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span> <span class="kw">next</span></span>
-<span>          <span class="va">idx</span> <span class="op">&lt;-</span> <span class="va">idx</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">score_vec</span><span class="op">[</span><span class="va">idx</span><span class="op">]</span>, na.last <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">]</span></span>
-<span>          <span class="va">cell_order</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">cell_order</span>, <span class="va">cell_ids</span><span class="op">[</span><span class="va">idx</span><span class="op">]</span><span class="op">)</span></span>
-<span>        <span class="op">}</span></span>
-<span>      <span class="op">}</span></span>
-<span>      <span class="va">cell_order</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">cell_order</span>, <span class="fu"><a href="https://generics.r-lib.org/reference/setops.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">expr_mat</span><span class="op">)</span>, <span class="va">cell_order</span><span class="op">)</span><span class="op">)</span></span>
-<span>      <span class="va">meta_idx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">cell_order</span>, <span class="va">meta</span><span class="op">$</span><span class="va">Cell</span><span class="op">)</span></span>
-<span></span>
-<span>      <span class="va">mat_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">expr_mat</span><span class="op">[</span><span class="va">gene_info</span><span class="op">$</span><span class="va">gene</span>, <span class="va">cell_order</span>, drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span><span class="op">)</span></span>
-<span>      <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mat_raw</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/make.unique.html" class="external-link">make.unique</a></span><span class="op">(</span><span class="va">gene_info</span><span class="op">$</span><span class="va">gene</span><span class="op">)</span></span>
-<span>      <span class="va">mat_scaled</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/scale.html" class="external-link">scale</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">mat_raw</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span>      <span class="co"># mat_scaled[mat_scaled &lt; -3] &lt;- -3</span></span>
-<span>      <span class="co"># mat_scaled[mat_scaled &gt; 3] &lt;- 3</span></span>
-<span></span>
-<span>      <span class="va">create_diverging_palette</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">values</span><span class="op">)</span> <span class="op">{</span></span>
-<span>        <span class="va">values</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">values</span><span class="op">)</span></span>
-<span>        <span class="va">values</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/is.finite.html" class="external-link">is.finite</a></span><span class="op">(</span><span class="va">values</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA_real_</span></span>
-<span>        <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">values</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>          <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#F7F7F7"</span>, <span class="st">"#B2182B"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">100</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span>        <span class="op">}</span></span>
-<span>        <span class="va">min_val</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">values</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span>        <span class="va">max_val</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">values</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span>        <span class="kw">if</span> <span class="op">(</span><span class="va">min_val</span> <span class="op">&gt;=</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
-<span>          <span class="va">colors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#F7F7F7"</span>, <span class="st">"#B2182B"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span>
-<span>        <span class="op">}</span> <span class="kw">else</span> <span class="kw">if</span> <span class="op">(</span><span class="va">max_val</span> <span class="op">&lt;=</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
-<span>          <span class="va">colors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#2166AC"</span>, <span class="st">"#F7F7F7"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span>
-<span>        <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span>          <span class="va">colors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#2166AC"</span>, <span class="st">"#F7F7F7"</span>, <span class="st">"#B2182B"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span>
-<span>        <span class="op">}</span></span>
-<span>        <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>colors <span class="op">=</span> <span class="va">colors</span><span class="op">)</span></span>
-<span>      <span class="op">}</span></span>
-<span></span>
-<span>      <span class="va">score_ann</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">meta</span><span class="op">[[</span><span class="va">score_precog_col</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="va">meta_idx</span><span class="op">]</span><span class="op">)</span></span>
-<span>      <span class="va">score_ann</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/is.finite.html" class="external-link">is.finite</a></span><span class="op">(</span><span class="va">score_ann</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA_real_</span></span>
-<span>      <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">score_ann</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="va">score_ann</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">score_ann</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span>      <span class="va">score_palette_ct</span> <span class="op">&lt;-</span> <span class="fu">create_diverging_palette</span><span class="op">(</span><span class="va">score_ann</span><span class="op">)</span><span class="op">$</span><span class="va">colors</span></span>
-<span>      <span class="va">pal_group</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>`Most Adverse` <span class="op">=</span> <span class="st">"#B2182B"</span>, Other <span class="op">=</span> <span class="st">"#F7F7F7"</span>, `Most Favorable` <span class="op">=</span> <span class="st">"#2166AC"</span><span class="op">)</span></span>
-<span>      <span class="va">pal_celltype_ct</span> <span class="op">&lt;-</span> <span class="va">pal_cells</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">meta</span><span class="op">$</span><span class="va">celltype_original</span><span class="op">)</span><span class="op">)</span><span class="op">]</span></span>
-<span></span>
-<span>      <span class="va">ann_col_ct</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>        `PhenoMapR score` <span class="op">=</span> <span class="va">score_ann</span>,</span>
-<span>        `Cell type` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">meta</span><span class="op">$</span><span class="va">celltype_original</span><span class="op">[</span><span class="va">meta_idx</span><span class="op">]</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">meta</span><span class="op">$</span><span class="va">celltype_original</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>        `Phenotype group` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">meta</span><span class="op">[[</span><span class="va">group_col</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="va">meta_idx</span><span class="op">]</span>, levels <span class="op">=</span> <span class="va">group_levels</span><span class="op">)</span>,</span>
-<span>        check.names <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span>      <span class="op">)</span></span>
-<span>      <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">ann_col_ct</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">cell_order</span></span>
-<span></span>
-<span>      <span class="va">ann_colors_ct</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>        `PhenoMapR score` <span class="op">=</span> <span class="va">score_palette_ct</span>,</span>
-<span>        `Cell type` <span class="op">=</span> <span class="va">pal_celltype_ct</span>,</span>
-<span>        `Phenotype group` <span class="op">=</span> <span class="va">pal_group</span></span>
-<span>      <span class="op">)</span></span>
-<span></span>
-<span>      <span class="va">heatmap_colors_ct</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"paletteer"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>        <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu">paletteer</span><span class="fu">::</span><span class="fu"><a href="https://emilhvitfeldt.github.io/paletteer/reference/paletteer_d.html" class="external-link">paletteer_d</a></span><span class="op">(</span><span class="st">"MexBrewer::Vendedora"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span>
-<span>      <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span>        <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#2166AC"</span>, <span class="st">"#F7F7F7"</span>, <span class="st">"#B2182B"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span>
-<span>      <span class="op">}</span></span>
-<span></span>
-<span>      <span class="fu">pheatmap</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span></span>
-<span>        <span class="va">mat_scaled</span>,</span>
-<span>        scale <span class="op">=</span> <span class="st">"none"</span>,</span>
-<span>        cluster_cols <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>        cluster_rows <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>        <span class="co"># gaps_row = gaps_row,</span></span>
-<span>        show_colnames <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>        annotation_col <span class="op">=</span> <span class="va">ann_col_ct</span>,</span>
-<span>        annotation_colors <span class="op">=</span> <span class="va">ann_colors_ct</span>,</span>
-<span>        color <span class="op">=</span> <span class="va">heatmap_colors_ct</span>,</span>
-<span>        <span class="co"># breaks = seq(-3, 3, length.out = 101),</span></span>
-<span>        main <span class="op">=</span> <span class="st">"Cell-type-specific phenotype marker genes"</span>,</span>
-<span>        fontsize_row <span class="op">=</span> <span class="fl">4</span></span>
-<span>      <span class="op">)</span></span>
-<span>    <span class="op">}</span></span>
-<span>  <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Cell-type-specific marker results were empty; skipping heatmap."</span><span class="op">)</span></span>
-<span>  <span class="op">}</span></span>
-<span><span class="op">}</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/plot_phenotype_markers.html">plot_phenotype_markers</a></span><span class="op">(</span></span>
+<span>  markers <span class="op">=</span> <span class="va">markers_ct</span>,</span>
+<span>  expr_mat <span class="op">=</span> <span class="va">expr_mat</span>,</span>
+<span>  meta <span class="op">=</span> <span class="va">meta</span>,</span>
+<span>  cell_id_col <span class="op">=</span> <span class="st">"Cell"</span>,</span>
+<span>  group_col <span class="op">=</span> <span class="va">group_col</span>,</span>
+<span>  score_col <span class="op">=</span> <span class="va">score_precog_col</span>,</span>
+<span>  celltype_col <span class="op">=</span> <span class="st">"celltype_original"</span>,</span>
+<span>  celltype_palette <span class="op">=</span> <span class="va">pal_cells</span>,</span>
+<span>  heatmap_type <span class="op">=</span> <span class="st">"cell_type_specific"</span>,</span>
+<span>  top_n_markers <span class="op">=</span> <span class="fl">20L</span>,</span>
+<span>  n_mark_labels <span class="op">=</span> <span class="fl">5L</span>,</span>
+<span>  p_adj_threshold <span class="op">=</span> <span class="fl">0.05</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p><img src="single-cell_files/figure-html/celltype-specific-phenotype-markers-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level2">
@@ -1025,59 +823,64 @@ cells and guide precision therapeutics through in silico perturbation.
 <span><span class="co">## tzcode source: system (glibc)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## attached base packages:</span></span>
-<span><span class="co">## [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
+<span><span class="co">## [1] grid      stats     graphics  grDevices utils     datasets  methods  </span></span>
+<span><span class="co">## [8] base     </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## other attached packages:</span></span>
-<span><span class="co">##  [1] pheatmap_1.0.13    patchwork_1.3.2    Seurat_5.4.0       SeuratObject_5.3.0</span></span>
-<span><span class="co">##  [5] sp_2.2-1           dplyr_1.2.0        ggpubr_0.6.3       ggplot2_4.0.2     </span></span>
-<span><span class="co">##  [9] googledrive_2.1.2  PhenoMapR_0.1.0   </span></span>
+<span><span class="co">##  [1] circlize_0.4.17       ComplexHeatmap_2.26.1 patchwork_1.3.2      </span></span>
+<span><span class="co">##  [4] Seurat_5.4.0          SeuratObject_5.3.0    sp_2.2-1             </span></span>
+<span><span class="co">##  [7] dplyr_1.2.0           ggpubr_0.6.3          ggplot2_4.0.2        </span></span>
+<span><span class="co">## [10] googledrive_2.1.2     PhenoMapR_0.1.0      </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## loaded via a namespace (and not attached):</span></span>
-<span><span class="co">##   [1] RColorBrewer_1.1-3     jsonlite_2.0.0         magrittr_2.0.4        </span></span>
-<span><span class="co">##   [4] spatstat.utils_3.2-2   farver_2.1.2           rmarkdown_2.30        </span></span>
-<span><span class="co">##   [7] fs_1.6.7               ragg_1.5.1             vctrs_0.7.1           </span></span>
-<span><span class="co">##  [10] ROCR_1.0-12            spatstat.explore_3.7-0 paletteer_1.7.0       </span></span>
-<span><span class="co">##  [13] rstatix_0.7.3          htmltools_0.5.9        curl_7.0.0            </span></span>
-<span><span class="co">##  [16] broom_1.0.12           Formula_1.2-5          sass_0.4.10           </span></span>
-<span><span class="co">##  [19] sctransform_0.4.3      parallelly_1.46.1      KernSmooth_2.23-26    </span></span>
-<span><span class="co">##  [22] bslib_0.10.0           htmlwidgets_1.6.4      desc_1.4.3            </span></span>
-<span><span class="co">##  [25] ica_1.0-3              plyr_1.8.9             plotly_4.12.0         </span></span>
-<span><span class="co">##  [28] zoo_1.8-15             cachem_1.1.0           igraph_2.2.2          </span></span>
-<span><span class="co">##  [31] mime_0.13              lifecycle_1.0.5        pkgconfig_2.0.3       </span></span>
-<span><span class="co">##  [34] Matrix_1.7-4           R6_2.6.1               fastmap_1.2.0         </span></span>
-<span><span class="co">##  [37] fitdistrplus_1.2-6     future_1.70.0          shiny_1.13.0          </span></span>
-<span><span class="co">##  [40] digest_0.6.39          rematch2_2.1.2         tensor_1.5.1          </span></span>
-<span><span class="co">##  [43] prismatic_1.1.2        RSpectra_0.16-2        irlba_2.3.7           </span></span>
-<span><span class="co">##  [46] textshaping_1.0.5      labeling_0.4.3         progressr_0.18.0      </span></span>
-<span><span class="co">##  [49] spatstat.sparse_3.1-0  mgcv_1.9-4             httr_1.4.8            </span></span>
-<span><span class="co">##  [52] polyclip_1.10-7        abind_1.4-8            compiler_4.5.3        </span></span>
-<span><span class="co">##  [55] gargle_1.6.1           bit64_4.6.0-1          withr_3.0.2           </span></span>
-<span><span class="co">##  [58] S7_0.2.1               backports_1.5.0        carData_3.0-6         </span></span>
-<span><span class="co">##  [61] fastDummies_1.7.5      ggsignif_0.6.4         MASS_7.3-65           </span></span>
-<span><span class="co">##  [64] tools_4.5.3            lmtest_0.9-40          otel_0.2.0            </span></span>
-<span><span class="co">##  [67] httpuv_1.6.17          future.apply_1.20.2    goftest_1.2-3         </span></span>
-<span><span class="co">##  [70] glue_1.8.0             nlme_3.1-168           promises_1.5.0        </span></span>
-<span><span class="co">##  [73] grid_4.5.3             Rtsne_0.17             cluster_2.1.8.2       </span></span>
-<span><span class="co">##  [76] reshape2_1.4.5         generics_0.1.4         hdf5r_1.3.12          </span></span>
-<span><span class="co">##  [79] gtable_0.3.6           spatstat.data_3.1-9    tidyr_1.3.2           </span></span>
-<span><span class="co">##  [82] data.table_1.18.2.1    car_3.1-5              spatstat.geom_3.7-0   </span></span>
-<span><span class="co">##  [85] RcppAnnoy_0.0.23       ggrepel_0.9.8          RANN_2.6.2            </span></span>
-<span><span class="co">##  [88] pillar_1.11.1          stringr_1.6.0          spam_2.11-3           </span></span>
-<span><span class="co">##  [91] RcppHNSW_0.6.0         later_1.4.8            splines_4.5.3         </span></span>
-<span><span class="co">##  [94] lattice_0.22-9         bit_4.6.0              survival_3.8-6        </span></span>
-<span><span class="co">##  [97] deldir_2.0-4           tidyselect_1.2.1       miniUI_0.1.2          </span></span>
-<span><span class="co">## [100] pbapply_1.7-4          knitr_1.51             gridExtra_2.3         </span></span>
-<span><span class="co">## [103] scattermore_1.2        xfun_0.56              matrixStats_1.5.0     </span></span>
-<span><span class="co">## [106] stringi_1.8.7          lazyeval_0.2.2         yaml_2.3.12           </span></span>
-<span><span class="co">## [109] evaluate_1.0.5         codetools_0.2-20       tibble_3.3.1          </span></span>
-<span><span class="co">## [112] cli_3.6.5              uwot_0.2.4             xtable_1.8-8          </span></span>
-<span><span class="co">## [115] reticulate_1.45.0      systemfonts_1.3.2      jquerylib_0.1.4       </span></span>
-<span><span class="co">## [118] Rcpp_1.1.1             spatstat.random_3.4-4  globals_0.19.1        </span></span>
-<span><span class="co">## [121] png_0.1-9              spatstat.univar_3.1-7  parallel_4.5.3        </span></span>
-<span><span class="co">## [124] pkgdown_2.2.0          presto_1.0.0           dotCall64_1.2         </span></span>
-<span><span class="co">## [127] listenv_0.10.1         viridisLite_0.4.3      scales_1.4.0          </span></span>
-<span><span class="co">## [130] ggridges_0.5.7         purrr_1.2.1            rlang_1.1.7           </span></span>
-<span><span class="co">## [133] cowplot_1.2.0</span></span></code></pre>
+<span><span class="co">##   [1] RcppAnnoy_0.0.23       splines_4.5.3          later_1.4.8           </span></span>
+<span><span class="co">##   [4] tibble_3.3.1           polyclip_1.10-7        fastDummies_1.7.5     </span></span>
+<span><span class="co">##   [7] lifecycle_1.0.5        rstatix_0.7.3          doParallel_1.0.17     </span></span>
+<span><span class="co">##  [10] globals_0.19.1         lattice_0.22-9         hdf5r_1.3.12          </span></span>
+<span><span class="co">##  [13] MASS_7.3-65            backports_1.5.0        magrittr_2.0.4        </span></span>
+<span><span class="co">##  [16] plotly_4.12.0          sass_0.4.10            rmarkdown_2.30        </span></span>
+<span><span class="co">##  [19] jquerylib_0.1.4        yaml_2.3.12            httpuv_1.6.17         </span></span>
+<span><span class="co">##  [22] otel_0.2.0             sctransform_0.4.3      spam_2.11-3           </span></span>
+<span><span class="co">##  [25] spatstat.sparse_3.1-0  reticulate_1.45.0      cowplot_1.2.0         </span></span>
+<span><span class="co">##  [28] pbapply_1.7-4          RColorBrewer_1.1-3     abind_1.4-8           </span></span>
+<span><span class="co">##  [31] Rtsne_0.17             presto_1.0.0           purrr_1.2.1           </span></span>
+<span><span class="co">##  [34] BiocGenerics_0.56.0    IRanges_2.44.0         S4Vectors_0.48.0      </span></span>
+<span><span class="co">##  [37] ggrepel_0.9.8          irlba_2.3.7            listenv_0.10.1        </span></span>
+<span><span class="co">##  [40] spatstat.utils_3.2-2   goftest_1.2-3          RSpectra_0.16-2       </span></span>
+<span><span class="co">##  [43] spatstat.random_3.4-4  fitdistrplus_1.2-6     parallelly_1.46.1     </span></span>
+<span><span class="co">##  [46] pkgdown_2.2.0          codetools_0.2-20       tidyselect_1.2.1      </span></span>
+<span><span class="co">##  [49] shape_1.4.6.1          farver_2.1.2           matrixStats_1.5.0     </span></span>
+<span><span class="co">##  [52] stats4_4.5.3           spatstat.explore_3.7-0 jsonlite_2.0.0        </span></span>
+<span><span class="co">##  [55] GetoptLong_1.1.0       progressr_0.18.0       Formula_1.2-5         </span></span>
+<span><span class="co">##  [58] ggridges_0.5.7         survival_3.8-6         iterators_1.0.14      </span></span>
+<span><span class="co">##  [61] systemfonts_1.3.2      foreach_1.5.2          tools_4.5.3           </span></span>
+<span><span class="co">##  [64] ragg_1.5.1             ica_1.0-3              Rcpp_1.1.1            </span></span>
+<span><span class="co">##  [67] glue_1.8.0             gridExtra_2.3          mgcv_1.9-4            </span></span>
+<span><span class="co">##  [70] xfun_0.56              withr_3.0.2            fastmap_1.2.0         </span></span>
+<span><span class="co">##  [73] digest_0.6.39          R6_2.6.1               mime_0.13             </span></span>
+<span><span class="co">##  [76] textshaping_1.0.5      colorspace_2.1-2       scattermore_1.2       </span></span>
+<span><span class="co">##  [79] tensor_1.5.1           spatstat.data_3.1-9    tidyr_1.3.2           </span></span>
+<span><span class="co">##  [82] generics_0.1.4         data.table_1.18.2.1    httr_1.4.8            </span></span>
+<span><span class="co">##  [85] htmlwidgets_1.6.4      uwot_0.2.4             pkgconfig_2.0.3       </span></span>
+<span><span class="co">##  [88] gtable_0.3.6           lmtest_0.9-40          S7_0.2.1              </span></span>
+<span><span class="co">##  [91] htmltools_0.5.9        carData_3.0-6          dotCall64_1.2         </span></span>
+<span><span class="co">##  [94] clue_0.3-67            scales_1.4.0           png_0.1-9             </span></span>
+<span><span class="co">##  [97] spatstat.univar_3.1-7  knitr_1.51             reshape2_1.4.5        </span></span>
+<span><span class="co">## [100] rjson_0.2.23           nlme_3.1-168           curl_7.0.0            </span></span>
+<span><span class="co">## [103] cachem_1.1.0           zoo_1.8-15             GlobalOptions_0.1.3   </span></span>
+<span><span class="co">## [106] stringr_1.6.0          KernSmooth_2.23-26     parallel_4.5.3        </span></span>
+<span><span class="co">## [109] miniUI_0.1.2           desc_1.4.3             pillar_1.11.1         </span></span>
+<span><span class="co">## [112] vctrs_0.7.1            RANN_2.6.2             promises_1.5.0        </span></span>
+<span><span class="co">## [115] car_3.1-5              xtable_1.8-8           cluster_2.1.8.2       </span></span>
+<span><span class="co">## [118] evaluate_1.0.5         magick_2.9.1           cli_3.6.5             </span></span>
+<span><span class="co">## [121] compiler_4.5.3         rlang_1.1.7            crayon_1.5.3          </span></span>
+<span><span class="co">## [124] future.apply_1.20.2    ggsignif_0.6.4         labeling_0.4.3        </span></span>
+<span><span class="co">## [127] plyr_1.8.9             fs_1.6.7               stringi_1.8.7         </span></span>
+<span><span class="co">## [130] viridisLite_0.4.3      deldir_2.0-4           lazyeval_0.2.2        </span></span>
+<span><span class="co">## [133] spatstat.geom_3.7-0    Matrix_1.7-4           RcppHNSW_0.6.0        </span></span>
+<span><span class="co">## [136] bit64_4.6.0-1          future_1.70.0          shiny_1.13.0          </span></span>
+<span><span class="co">## [139] ROCR_1.0-12            gargle_1.6.1           igraph_2.2.2          </span></span>
+<span><span class="co">## [142] broom_1.0.12           bslib_0.10.0           bit_4.6.0</span></span></code></pre>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

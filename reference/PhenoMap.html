@@ -63,7 +63,8 @@ from various reference datasets (PRECOG, TCGA, Pediatric, ICI).</p>
 <span>  group_by <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  assay <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  slot <span class="op">=</span> <span class="st">"data"</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  reference_sign <span class="op">=</span> <span class="fl">1L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -122,13 +123,26 @@ The function handles both automatically.</p></dd>
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical. Print progress messages (default: TRUE)</p></dd>
 
+
+<dt id="arg-reference-sign">reference_sign<a class="anchor" aria-label="anchor" href="#arg-reference-sign"></a></dt>
+<dd><p>Multiply all reference gene z-scores by this value before
+the weighted sum. Use <code>1</code> (default) or <code>-1</code> to flip the sign of
+resulting PhenoMap scores without changing the reference matrix (e.g. if you
+want positive scores to mean the opposite association). For custom references
+from <code><a href="derive_reference_from_bulk.html">derive_reference_from_bulk</a></code>, prefer setting
+<code>binary_positive_reference</code> so the reference itself matches your factor
+levels (first level = positive association when <code>"first"</code>).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data.frame with samples/cells as rows and score columns. Column
 names follow pattern: <code>weighted_sum_score_{reference}_{cancer_type}</code>.
-<strong>Directionality</strong>: higher score = worse prognosis (adverse); lower score =
-better prognosis (favorable), matching positive reference z = worse survival.
+<strong>Directionality (built-in PRECOG/TCGA/ICI references)</strong>: higher score =
+worse prognosis (adverse); lower score = better prognosis (favorable),
+matching positive reference z = worse survival. <strong>Custom references</strong> from
+<code><a href="derive_reference_from_bulk.html">derive_reference_from_bulk</a></code> follow the sign convention you chose
+there (see <code>binary_positive_reference</code>) times <code>reference_sign</code>.
 For Seurat/SCE objects, scoring may use only reference genes internally for
 memory efficiency. Always add scores to the <strong>same (full) object</strong> using
 <code>add_scores_to_seurat</code> or <code>add_scores_to_sce</code> so that all genes

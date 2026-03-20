@@ -67,6 +67,7 @@ association z-scores that can be used as a custom reference in <code><a href="Ph
 <span>  survival_event <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  normalize <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  hugo_species <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"human"</span>, <span class="st">"mouse"</span><span class="op">)</span>,</span>
+<span>  binary_positive_reference <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"second"</span>, <span class="st">"first"</span><span class="op">)</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -129,6 +130,18 @@ looks like counts (default <code>TRUE</code>). Set <code>FALSE</code> to skip.</
 <code>"human"</code> or <code>"mouse"</code> (default <code>"human"</code>).</p></dd>
 
 
+<dt id="arg-binary-positive-reference">binary_positive_reference<a class="anchor" aria-label="anchor" href="#arg-binary-positive-reference"></a></dt>
+<dd><p>For <code>phenotype_type</code> <code>"binary"</code> only:
+which level of the binary factor should correspond to the <strong>positive</strong>
+outcome in logistic regression (<code>y = 1</code>), so that genes with
+<strong>positive</strong> z-scores are those whose <strong>higher</strong> expression is
+associated with that level. Use <code>"first"</code> when the first level of
+<code>factor(..., levels = c(...))</code> is your phenotype of interest (e.g.
+<code>mutated</code> vs <code>wt</code>); use <code>"second"</code> for the legacy convention
+(second level coded as <code>y = 1</code>). Default <code>"second"</code> preserves
+behaviour from previous versions when levels were implicit (e.g. alphabetical).</p></dd>
+
+
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical. Print progress messages (default <code>TRUE</code>).</p></dd>
 
@@ -137,7 +150,12 @@ looks like counts (default <code>TRUE</code>). Set <code>FALSE</code> to skip.</
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data.frame with genes as rownames and a single column of
 phenotype-association z-scores, suitable for <code>reference</code> in
-<code><a href="PhenoMap.html">PhenoMap</a></code>.</p>
+<code><a href="PhenoMap.html">PhenoMap</a></code>. When scoring with <code><a href="PhenoMap.html">PhenoMap</a></code>, a
+<strong>positive</strong> weighted sum means higher expression of genes with
+<strong>positive</strong> reference z is associated with the level you chose via
+<code>binary_positive_reference</code> (for binary phenotypes). Use
+<code>PhenoMap(..., reference_sign = -1)</code> if you need to flip the sign of
+the entire reference after the fact.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

@@ -419,12 +419,30 @@ transpose and message. It then cleans gene names to approved HUGO
 symbols (if <code>HGNChelper</code> is installed), checks/normalizes
 expression, and computes gene association z-scores (Cox for survival,
 logistic regression for binary, correlation for continuous).</p>
+<p><strong>Binary phenotypes and sign:</strong> Encode the outcome as a
+<strong>factor</strong> with <code>levels</code> in the order you care
+about. Set
+<strong><code>binary_positive_reference = "first"</code></strong> so
+that the <strong>first</strong> level is the “positive” phenotype in the
+logistic model: genes with <strong>positive</strong> z-scores are those
+whose <strong>higher</strong> expression is associated with that first
+level
+(e.g. <code>factor(c("wt","mut",...), levels = c("mut", "wt"))</code> if
+<em>mutated</em> is the phenotype of interest for positive scores). The
+default
+<strong><code>binary_positive_reference = "second"</code></strong>
+matches older behaviour (second level coded as the positive class).
+After deriving the reference,
+<strong><code>PhenoMap(..., reference_sign = -1)</code></strong> flips
+all reference z-scores at scoring time if you need the opposite sign
+without re-fitting.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Bulk: genes (rows) x samples (columns); sample IDs = colnames</span></span>
 <span><span class="va">bulk_expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>   <span class="co"># e.g. 5000 genes x 50 samples</span></span>
 <span><span class="va">pheno</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  sample_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">bulk_expr</span><span class="op">)</span>,   <span class="co"># must match expression column names</span></span>
-<span>  response <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"R"</span>, <span class="st">"NR"</span>, <span class="va">...</span><span class="op">)</span>       <span class="co"># or time + event for survival</span></span>
+<span>  <span class="co"># Put the phenotype of interest FIRST so positive scores align with it:</span></span>
+<span>  response <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">...</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mutated"</span>, <span class="st">"wildtype"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Derive reference z-scores</span></span>
@@ -433,7 +451,8 @@ logistic regression for binary, correlation for continuous).</p>
 <span>  phenotype <span class="op">=</span> <span class="va">pheno</span>,</span>
 <span>  sample_id_column <span class="op">=</span> <span class="st">"sample_id"</span>,</span>
 <span>  phenotype_column <span class="op">=</span> <span class="st">"response"</span>,</span>
-<span>  phenotype_type <span class="op">=</span> <span class="st">"binary"</span>   <span class="co"># or "survival", "continuous", "auto"</span></span>
+<span>  phenotype_type <span class="op">=</span> <span class="st">"binary"</span>,</span>
+<span>  binary_positive_reference <span class="op">=</span> <span class="st">"first"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Score single-cell or spatial data with the derived reference</span></span>

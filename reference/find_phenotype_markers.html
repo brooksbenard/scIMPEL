@@ -78,6 +78,7 @@ available, else base R) and does not require Seurat.</p>
 <span>  pval_threshold <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  max_cells_per_ident <span class="op">=</span> <span class="fl">5000L</span>,</span>
+<span>  validate_expression_axes <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -162,6 +163,13 @@ subsample to this limit before FindMarkers (default 5000). Reduces memory
 for large objects. Set to <code>Inf</code> to disable.</p></dd>
 
 
+<dt id="arg-validate-expression-axes">validate_expression_axes<a class="anchor" aria-label="anchor" href="#arg-validate-expression-axes"></a></dt>
+<dd><p>If TRUE (default), check that the expression
+matrix is genes \(\times\) cells (transpose when a clear samples \(\times\)
+genes layout is detected) and normalize colnames for ID matching. Use
+log-normalized (e.g. log1p CPM) <code>data</code> for matrix input when possible.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional arguments passed to <code><a href="https://satijalab.org/seurat/reference/FindMarkers.html" class="external-link">Seurat::FindMarkers</a></code> when input is a Seurat object (ignored for matrix/SCE/Matrix input).</p></dd>
 
@@ -178,6 +186,19 @@ When <code>marker_scope = "cell_type_specific"</code>, each row is one gene for
 one cell type; the <code>cell_type</code> column identifies which type the
 contrast was anchored on (adverse/favorable cells of that type vs all
 other cells).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Phenotype tails (e.g. top/bottom 5\<!-- %) come from \code{\link{define_phenotype_groups}()}. -->
+For <code>marker_scope = "cell_type_specific"</code>, each test compares cells in
+<strong>(that cell type \(\cap\) adverse or favorable tail)</strong> to <strong>all
+other cells</strong>. <code>group_labels</code> cell IDs must match <code>colnames(expression)</code>
+(after trimming); use the same identifiers you used when building the score
+table and phenotype groups.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="plot_phenotype_markers.html">plot_phenotype_markers()</a></code> for heatmaps of marker expression.</p></div>
     </div>
 
     <div class="section level2">

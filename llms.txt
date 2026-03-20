@@ -114,6 +114,8 @@ Define adverse/favorable groups and find marker genes.
   : Define Phenotype Groups (Top and Bottom Percentile)
 - [`find_phenotype_markers()`](https://brooksbenard.github.io/PhenoMapR/reference/find_phenotype_markers.md)
   : Find Unique Marker Genes for Adverse and Favorable Phenotype Groups
+- [`plot_phenotype_markers()`](https://brooksbenard.github.io/PhenoMapR/reference/plot_phenotype_markers.md)
+  : Plot phenotype marker gene heatmaps (ComplexHeatmap)
 
 ## Visualization
 
@@ -134,7 +136,7 @@ Tutorials and worked examples with PhenoMapR.
 
 - [Scoring single-cell data with
   PhenoMapR](https://brooksbenard.github.io/PhenoMapR/articles/single-cell.md):
-- [Scoring spatial transcriptomics with
+- [Scoring spatial transcriptomics data with
   PhenoMapR](https://brooksbenard.github.io/PhenoMapR/articles/spatial-transcriptomics.md):
 - [Scoring bulk gene expression samples with
   PhenoMapR](https://brooksbenard.github.io/PhenoMapR/articles/bulk-survival.md):

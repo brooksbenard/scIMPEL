@@ -19,6 +19,7 @@ derive_reference_from_bulk(
   survival_event = NULL,
   normalize = TRUE,
   hugo_species = c("human", "mouse"),
+  binary_positive_reference = c("second", "first"),
   verbose = TRUE
 )
 ```
@@ -77,6 +78,18 @@ derive_reference_from_bulk(
   Character. Species for HUGO symbol cleaning: `"human"` or `"mouse"`
   (default `"human"`).
 
+- binary_positive_reference:
+
+  For `phenotype_type` `"binary"` only: which level of the binary factor
+  should correspond to the **positive** outcome in logistic regression
+  (`y = 1`), so that genes with **positive** z-scores are those whose
+  **higher** expression is associated with that level. Use `"first"`
+  when the first level of `factor(..., levels = c(...))` is your
+  phenotype of interest (e.g. `mutated` vs `wt`); use `"second"` for the
+  legacy convention (second level coded as `y = 1`). Default `"second"`
+  preserves behaviour from previous versions when levels were implicit
+  (e.g. alphabetical).
+
 - verbose:
 
   Logical. Print progress messages (default `TRUE`).
@@ -86,6 +99,13 @@ derive_reference_from_bulk(
 A data.frame with genes as rownames and a single column of
 phenotype-association z-scores, suitable for `reference` in
 [`PhenoMap`](https://brooksbenard.github.io/PhenoMapR/reference/PhenoMap.md).
+When scoring with
+[`PhenoMap`](https://brooksbenard.github.io/PhenoMapR/reference/PhenoMap.md),
+a **positive** weighted sum means higher expression of genes with
+**positive** reference z is associated with the level you chose via
+`binary_positive_reference` (for binary phenotypes). Use
+`PhenoMap(..., reference_sign = -1)` if you need to flip the sign of the
+entire reference after the fact.
 
 ## Details
 

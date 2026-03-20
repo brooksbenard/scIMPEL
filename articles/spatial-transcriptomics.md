@@ -1,10 +1,9 @@
-# Scoring spatial transcriptomics with PhenoMapR
+# Scoring spatial transcriptomics data with PhenoMapR
 
 ## Overview
 
-This vignette demonstrates using PhenoMapR on **spatial
-transcriptomics** data. We use the processed spatial object
-**HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed**
+This vignette demonstrates using **{PhenoMapR}** on spatial
+transcriptomics data. We use a preprocessed 10X Visium spatial object
 (`HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed.rds`) to score spots with
 the PRECOG **Pancreatic** reference, define adverse vs. favorable
 prognostic groups, and visualize both score distributions and **where**
@@ -12,47 +11,29 @@ PhenoMapR scores localize on the tissue image. The workflow mirrors the
 single-cell vignette but adds spatial plots to show score and prognostic
 group across the slide.
 
-## Load and setup
+## Load data
 
-Load PhenoMapR and Seurat, and locate the spatial RDS file. Place
-`HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed.rds` in `vignettes/` or the
-project root (see
-[vignettes/README.md](https://brooksbenard.github.io/PhenoMapR/articles/README.md)).
+Here, we use a 10X Visium spatial transcriptomics sample from a
+pancreatic cancer dataset available from
+[HTAN](https://humantumoratlas.org/). The sample has been preprocessed
+and has paired single cell RNAseq data mapped to the Visium spots using
+[**CytoSPACE**](https://www.nature.com/articles/s41587-023-01697-9).
 
 ``` r
 suppressPackageStartupMessages(library(PhenoMapR))
 suppressPackageStartupMessages(library(Seurat))
 suppressPackageStartupMessages(library(ggplot2))
-if (!exists("PhenoMap", mode = "function")) {
-  stop("PhenoMap not found. Reinstall PhenoMapR from source: devtools::install() or install.packages('.', repos = NULL, type = 'source')")
-}
+suppressPackageStartupMessages(library(googledrive))
+suppressPackageStartupMessages(library(dplyr))
+
 knitr::opts_chunk$set(fig.width = 12, out.width = "100%", warning = FALSE)
 theme_set(theme_minimal(base_size = 14))
 
-report_timing <- function(step_name, t0, obj = NULL) {
-  elapsed <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
-  mem_mb <- if (!is.null(obj)) format(object.size(obj), units = "MB") else "-"
-  message(sprintf("[%s] Runtime: %.2f s | Memory: %s", step_name, elapsed, mem_mb))
-}
-
-# Vignette data: load from Google Drive only
-if (!requireNamespace("googledrive", quietly = TRUE)) {
-  stop("The 'googledrive' package is required. Install with: install.packages('googledrive')")
-}
-vignette_dir <- if (dir.exists("vignettes")) "vignettes" else if (dir.exists("Vignettes")) "Vignettes" else "."
-if (!dir.exists(vignette_dir)) dir.create(vignette_dir, recursive = TRUE, showWarnings = FALSE)
-
 googledrive::drive_deauth()
-rds_path <- file.path(vignette_dir, "HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed.rds")
-googledrive::drive_download(googledrive::as_id("1HM0dBrQnaNsdm5mnq23aaQ2ILofJ0_vj"), rds_path, overwrite = TRUE)
+googledrive::drive_download(googledrive::as_id("1HM0dBrQnaNsdm5mnq23aaQ2ILofJ0_vj"), "HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed.rds", overwrite = TRUE)
 
-has_data <- file.exists(rds_path)
-knitr::opts_chunk$set(eval = has_data)
-if (!has_data) {
-  message("Could not download spatial RDS from Google Drive.")
-} else {
   suppressMessages({
-    seurat <- PhenoMapR::load_rds_fast(rds_path)
+    seurat <- PhenoMapR::load_rds_fast("HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed.rds")
     update_fn <- tryCatch(
       get("UpdateSeuratObject", envir = asNamespace("SeuratObject")),
       error = function(e) get0("UpdateSeuratObject", envir = asNamespace("Seurat"), mode = "function")
@@ -65,17 +46,12 @@ if (!has_data) {
   n_genes <- nrow(seurat)
   n_spots <- ncol(seurat)
   n_images <- length(seurat@images)
-  head(colnames(seurat@meta.data))
-}
 ```
 
-    ## [1] "orig.ident"           "nCount_Spatial"       "nFeature_Spatial"    
-    ## [4] "Row.names"            "Cell"                 "precog_score_pearson"
+## Score sample with PhenoMapR
 
-## Score spots with PRECOG Pancreatic
-
-Apply PhenoMapR using the built-in PRECOG primary **Pancreatic**
-reference, then add scores to the Seurat object metadata.
+Apply **{PhenoMapR}** using the built-in PRECOG primary **Pancreatic**
+reference [\[1\]](#ref1), then add scores to the Seurat object metadata.
 
 ``` r
 suppressMessages({
@@ -90,11 +66,7 @@ suppressMessages({
   seurat <- PhenoMapR::add_scores_to_seurat(seurat, scores_spatial)
 })
 score_col <- grep("weighted_sum_score", names(scores_spatial), value = TRUE)[1]
-summary(seurat@meta.data[[score_col]])
 ```
-
-    ##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-    ## -24009.6    487.3   1126.1   1782.4   2458.4  19771.5
 
 ## Score distribution
 
@@ -103,96 +75,24 @@ Distribution of PhenoMapR (PRECOG Pancreatic) scores across spots.
 ``` r
 plot_score_distribution(
   seurat@meta.data[[score_col]],
-  main = "PRECOG Pancreatic score (spatial spots)",
+  main = "PRECOG Pancreatic score distribution",
   base_size = 14
 )
 ```
 
 ![](spatial-transcriptomics_files/figure-html/score-distribution-1.png)
 
-## Score by cell type or cluster (if available)
+## Score by cell type
 
-If the object has cell type or cluster annotations (e.g. **CellType**),
-we can see how scores vary by group. For
-HT270P1-S1H2Fc2U1Z1Bs1-H2Bs2-Test_processed, cell types may be in a
-separate file from CytoSpace; we try to load a companion table and add
-**CellType** to the object if it is not already in `meta.data`.
+Before looking at any spatial information, we plot the **PhenoMapR**
+score by cell type to see cell types most enriched in the adverse and
+favorable prognostic groups.
 
 ``` r
-# If CellType is missing, try a companion file (e.g. *_celltypes.csv or *_annotations.csv next to the RDS)
-tried <- character(0)
-if (!"CellType" %in% names(seurat@meta.data)) {
-  rds_dir <- dirname(rds_path)
-  rds_base <- sub("\\.rds$", "", basename(rds_path))
-  for (suffix in c("_celltypes.csv", "_annotations.csv", "_celltype.csv", "_metadata.csv")) {
-    f <- file.path(rds_dir, paste0(rds_base, suffix))
-    if (file.exists(f)) {
-      tried <- c(tried, f)
-      tab <- tryCatch(utils::read.csv(f, stringsAsFactors = FALSE), error = function(e) NULL)
-      if (!is.null(tab) && nrow(tab) > 0) {
-        # Find a column that looks like cell type (many unique character values) and one for cell/spot ID
-        id_col <- NULL
-        type_col <- NULL
-        for (c in c("CellType", "celltype", "cell_type", "annotation", "celltype_predicted")) {
-          if (c %in% names(tab)) { type_col <- c; break }
-        }
-        if (is.null(type_col)) type_col <- names(tab)[sapply(tab, function(x) is.character(x) || is.factor(x))][1]
-        for (c in c("cell", "barcode", "spot", "id", "Cell", "Barcode")) {
-          if (any(tolower(names(tab)) == tolower(c))) {
-            id_col <- names(tab)[tolower(names(tab)) == tolower(c)][1]
-            break
-          }
-        }
-        if (is.null(id_col)) id_col <- names(tab)[1]
-        if (!is.null(type_col) && type_col %in% names(tab)) {
-          types <- setNames(as.character(tab[[type_col]]), tab[[id_col]])
-          cells <- colnames(seurat)
-          match_idx <- match(cells, names(types))
-          if (sum(!is.na(match_idx)) > 0) {
-            seurat$CellType <- types[match_idx]
-            NULL
-            break
-          }
-        }
-      }
-    }
-  }
-}
-if (!"CellType" %in% names(seurat@meta.data) && length(tried) > 0) {
-  message("Companion files tried: ", paste(basename(tried), collapse = ", "), "; no match by cell ID.")
-}
-```
-
-``` r
-# Prefer CellType; then any column with 2--100 discrete levels (e.g. orig.ident, clusters)
 spatial_celltype_pal <- NULL
 spatial_celltype_col <- NULL
 meta_names <- names(seurat@meta.data)
-celltype_col <- NULL
-for (c in c("CellType", "Celltype..major.lineage.", "cell_type", "celltype", "annotation", "seurat_clusters")) {
-  if (c %in% meta_names) {
-    celltype_col <- c
-    break
-  }
-}
-if (is.null(celltype_col)) {
-  idx <- grep("celltype|cluster|annotation", meta_names, ignore.case = TRUE)
-  if (length(idx) > 0) celltype_col <- meta_names[idx[1]]
-}
-# Last resort: use first metadata column that has 2--100 unique values (discrete grouping)
-if (is.null(celltype_col)) {
-  for (c in meta_names) {
-    if (c == score_col) next
-    raw <- seurat@meta.data[[c]]
-    if (is.list(raw)) raw <- vapply(raw, function(x) as.character(x)[1], character(1))
-    else raw <- as.character(raw)
-    n_u <- length(unique(na.omit(raw)))
-    if (n_u >= 2L && n_u <= 100L) {
-      celltype_col <- c
-      break
-    }
-  }
-}
+celltype_col <- "CellType"
 
 df <- seurat@meta.data
 n_meta <- nrow(df)
@@ -206,18 +106,9 @@ if (!is.null(celltype_col)) {
   }
   if (length(ann_vec) != n_meta) ann_vec <- NULL
 }
-if (is.null(ann_vec)) {
-  message("No annotation column with 2--100 levels found. To plot score by cell type, add a CellType column to the object (e.g. from a CytoSpace annotation file).")
-  df$annotation <- factor(rep("all", n_meta))
-  celltype_col <- "annotation"
-  seurat$annotation <- df$annotation
-} else {
-  df$annotation <- factor(ann_vec, exclude = NULL)
-}
 
-n_levels <- length(levels(df$annotation))
-# Allow 2--100 levels for boxplot (covers 16 cell types and similar datasets)
-if (n_levels >= 2L && n_levels <= 100L) {
+  df$annotation <- factor(ann_vec, exclude = NULL)
+
   pal <- PhenoMapR::get_celltype_palette(levels(df$annotation))
   print(ggplot(df, aes(
     x = reorder(.data$annotation, .data[[score_col]], FUN = median),
@@ -232,18 +123,18 @@ if (n_levels >= 2L && n_levels <= 100L) {
       legend.position = "right"
     ) +
     labs(y = "PRECOG Pancreatic score", x = celltype_col, title = "Score by annotation (spatial)"))
-} else {
-  spatial_celltype_pal <- NULL
-  spatial_celltype_col <- NULL
-  message("Single or too many annotation levels (", n_levels, "); skipping boxplot.")
-}
 ```
 
 ![](spatial-transcriptomics_files/figure-html/score-by-annotation-1.png)
+As see in the other Pancreatic caner vignettes, the ductal cell type is
+the most associated with the adverse prognostic signal, while the beta
+and delta cells are most associated with favorable signal.
+Interestingly, plasma cells show quite a wide range of score and contain
+some of the most favorably prognostic cells across the sample.
 
 ## Define phenotype groups
 
-Label spots as Most Adverse (top 5%), Most Favorable (bottom 5%), or
+Label cells as Most Adverse (top 5%), Most Favorable (bottom 5%), or
 Other, then attach to metadata for spatial plotting.
 
 ``` r
@@ -260,15 +151,13 @@ table(seurat@meta.data[[group_col]], useNA = "ifany")
     ##   Most Adverse Most Favorable          Other 
     ##           1073           1073          19312
 
-## Spatial plots: where do PhenoMapR scores localize?
+## Build spatial locations dataframe for plotting
 
-We plot **cell type**, **PhenoMapR score** (z-scaled for display), and
-**5th percentile prognostic groups** in spatial coordinates. High (red)
-scores indicate more adverse prognostic expression; low (blue) indicate
-more favorable.
+Here, we use the coordinates information from the spatial seurat object
+and pair them with the cell level metadata in order to plot the results
+in spatial contect.
 
 ``` r
-suppressPackageStartupMessages(library(dplyr))
 coords <- tryCatch(
   suppressMessages(Seurat::GetTissueCoordinates(seurat)),
   error = function(e) NULL
@@ -362,6 +251,11 @@ if (!is.null(coords) && nrow(coords) > 0) {
 
 ### Where cell types are
 
+Here, we plot the location of the different cell types across the
+sample. Points are sized based on the number of cells mapped to each
+spot (CytoSPACE) and jittered in order to see all points when multiple
+cells map to the same spot.
+
 ``` r
 if (exists("has_spatial_coords") && has_spatial_coords && !is.null(spatial_df$celltype_plot) &&
     length(levels(spatial_df$celltype_plot)) >= 2L) {
@@ -423,8 +317,9 @@ if (exists("has_spatial_coords") && has_spatial_coords) {
 
 ### Where 5th percentile cells are
 
-Spatial map of prognostic groups: top 5% (Most Adverse), bottom 5% (Most
-Favorable), and the rest (Other).
+In order to make the visualization more apparent, we restrict the
+spatial map of prognostic groups to: top 5% (Most Adverse), bottom 5%
+(Most Favorable), and the rest (Other).
 
 ``` r
 if (exists("has_spatial_coords") && has_spatial_coords && !is.null(group_col)) {
@@ -456,6 +351,9 @@ if (exists("has_spatial_coords") && has_spatial_coords && !is.null(group_col)) {
 ```
 
 ![](spatial-transcriptomics_files/figure-html/spatial-group-1.png)
+
+It looks like the adverse and favorable cells tend to co-localize
+independently (adverse with adverse, and favorable with favorable).
 
 ## Prognostic markers
 
@@ -721,236 +619,12 @@ if (!is.null(group_col)) {
 ```
 
 ![](spatial-transcriptomics_files/figure-html/stacked-bar-adverse-favorable-by-celltype-1.png)
-
-### Step 3: Unique markers for adverse/favorable cell types
-
-For each combination of prognostic group and cell type (e.g. adverse
-ductal, favorable B cell), we find genes that are uniquely upregulated
-in that group vs. all other spots.
-
-``` r
-markers_by_ct <- NULL
-ct_col_markers <- NULL
-cat("Step 3: Finding unique markers for adverse/favorable cell types...\n")
-```
-
-    ## Step 3: Finding unique markers for adverse/favorable cell types...
-
-``` r
-if (is.null(group_col)) {
-  cat("Skipping: prognostic groups not defined (group_col is NULL).\n")
-} else {
-  celltype_for_markers <- NULL
-  if (exists("spatial_df_celltype_col") && !is.null(spatial_df_celltype_col) && spatial_df_celltype_col %in% names(seurat@meta.data)) {
-    celltype_for_markers <- spatial_df_celltype_col
-  } else if (exists("celltype_col") && !is.null(celltype_col) && celltype_col %in% names(seurat@meta.data)) {
-    celltype_for_markers <- celltype_col
-  } else {
-    for (c in c("CellType", "Celltype..major.lineage.", "cell_type", "celltype", "annotation", "seurat_clusters")) {
-      if (c %in% names(seurat@meta.data) && length(unique(na.omit(seurat@meta.data[[c]]))) >= 2) {
-        celltype_for_markers <- c
-        break
-      }
-    }
-  }
-  if (is.null(celltype_for_markers)) {
-    cat("Skipping: no cell type column found in metadata.\n")
-  } else {
-    cat("Using cell type column:", celltype_for_markers, "\n")
-    meta <- seurat@meta.data
-    meta$pg <- meta[[group_col]]
-    meta$ct <- as.character(meta[[celltype_for_markers]])
-    meta$ct_ok <- !is.na(meta$ct) & nzchar(trimws(meta$ct))
-    meta$combined_group <- "Other"
-    meta$combined_group[meta$pg == "Most Adverse" & meta$ct_ok] <- paste0("Adverse_", gsub(" ", "_", meta$ct[meta$pg == "Most Adverse" & meta$ct_ok]))
-    meta$combined_group[meta$pg == "Most Favorable" & meta$ct_ok] <- paste0("Favorable_", gsub(" ", "_", meta$ct[meta$pg == "Most Favorable" & meta$ct_ok]))
-    idx_keep <- meta$pg %in% c("Most Adverse", "Most Favorable") & meta$ct_ok
-    combined_tab <- table(meta$combined_group[idx_keep], useNA = "no")
-    min_cells <- 10L
-    combined_lev <- names(combined_tab)[combined_tab >= min_cells]
-    if (length(combined_lev) >= 1L) {
-      cat("Groups with >=", min_cells, " cells:", paste(combined_lev, collapse = ", "), "\n")
-      seurat$PhenoMapR_combined_group <- meta$combined_group
-      all_lev <- c(combined_lev, "Other")
-      seurat$PhenoMapR_combined_group <- factor(seurat$PhenoMapR_combined_group, levels = all_lev)
-      assay_fa <- if (exists("assay_markers") && !is.null(assay_markers) && assay_markers %in% names(seurat@assays)) {
-        assay_markers
-      } else if (assay_use %in% names(seurat@assays)) {
-        assay_use
-      } else {
-        "RNA"
-      }
-      cat("Using assay for FindAllMarkers:", assay_fa, "(full object, ncol=", ncol(seurat), ")\n")
-      find_args <- list(
-        seurat,
-        assay = assay_fa,
-        group.by = "PhenoMapR_combined_group",
-        test.use = "wilcox",
-        min.pct = 0.05,
-        logfc.threshold = 0.1,
-        max.cells.per.ident = 3000,
-        verbose = FALSE,
-        only.pos = TRUE,
-        return.thresh = 0.05
-      )
-      if ("layer" %in% names(formals(Seurat::FindAllMarkers))) {
-        find_args$layer <- "data"
-      } else {
-        find_args$slot <- "data"
-      }
-      markers_by_ct <- tryCatch(
-        do.call(Seurat::FindAllMarkers, find_args),
-        error = function(e) {
-          cat("FindAllMarkers (cell-type-specific) failed:", conditionMessage(e), "\n")
-          NULL
-        }
-      )
-      if (!is.null(markers_by_ct) && nrow(markers_by_ct) == 0) {
-        cat("No markers with min.pct=0.05, logfc.threshold=0.1, return.thresh=0.05; retrying with relaxed thresholds...\n")
-        find_args$min.pct <- 0
-        find_args$logfc.threshold <- 0
-        markers_by_ct <- tryCatch(
-          do.call(Seurat::FindAllMarkers, find_args),
-          error = function(e) NULL
-        )
-      }
-      if (!is.null(markers_by_ct) && nrow(markers_by_ct) == 0) {
-        cat("Retrying with return.thresh=1 (return all genes regardless of p-value)...\n")
-        find_args$return.thresh <- 1
-        markers_by_ct <- tryCatch(
-          do.call(Seurat::FindAllMarkers, find_args),
-          error = function(e) NULL
-        )
-        if (!is.null(markers_by_ct) && nrow(markers_by_ct) > 0) {
-          markers_by_ct <- markers_by_ct[markers_by_ct$p_val_adj < 0.05, , drop = FALSE]
-          cat("Filtered to p_val_adj < 0.05:", nrow(markers_by_ct), "markers.\n")
-        }
-      }
-      if (!is.null(markers_by_ct) && nrow(markers_by_ct) > 0) {
-        markers_by_ct <- markers_by_ct[markers_by_ct$cluster %in% combined_lev, , drop = FALSE]
-        if (nrow(markers_by_ct) > 0) {
-          ct_col_markers <- celltype_for_markers
-          cat("Found markers for", length(unique(markers_by_ct$cluster)), "adverse/favorable cell type groups.\n")
-          print(head(markers_by_ct[, c("gene", "cluster", "avg_log2FC", "p_val_adj")], 10))
-        } else {
-          cat("FindAllMarkers returned markers only for excluded groups (after filtering to adverse/favorable).\n")
-        }
-      } else {
-        if (is.null(markers_by_ct)) {
-          cat("FindAllMarkers failed or returned NULL.\n")
-        } else {
-          cat("FindAllMarkers returned 0 marker genes.\n")
-        }
-        tab_ct <- table(seurat$PhenoMapR_combined_group, useNA = "no")
-        cat("Diagnostic: cells per group:", paste(names(tab_ct), "=", tab_ct, collapse = ", "), "\n")
-        cat("Diagnostic: assay", assay_fa, "\n")
-      }
-    } else {
-      cat("Insufficient cells in adverse/favorable cell type combinations (need >=", min_cells, " per group).\n")
-      cat("Group counts:", paste(names(combined_tab), "=", combined_tab, collapse = ", "), "\n")
-    }
-  }
-}
-```
-
-    ## Using cell type column: CellType 
-    ## Groups with >= 10  cells: Adverse_Acinar, Adverse_Ductal, Adverse_Endothelial, Adverse_Fibroblast, Adverse_Macrophage, Adverse_Plasma, Favorable_Acinar, Favorable_Alpha, Favorable_Beta, Favorable_Delta, Favorable_Ductal, Favorable_Fibroblast, Favorable_Plasma, Favorable_Schwann 
-    ## Using assay for FindAllMarkers: Spatial (full object, ncol= 21458 )
-
-    ## No markers with min.pct=0.05, logfc.threshold=0.1, return.thresh=0.05; retrying with relaxed thresholds...
-
-    ## Retrying with return.thresh=1 (return all genes regardless of p-value)...
-
-    ## FindAllMarkers returned 0 marker genes.
-    ## Diagnostic: cells per group: Adverse_Acinar = 21, Adverse_Ductal = 784, Adverse_Endothelial = 52, Adverse_Fibroblast = 157, Adverse_Macrophage = 26, Adverse_Plasma = 24, Favorable_Acinar = 11, Favorable_Alpha = 427, Favorable_Beta = 173, Favorable_Delta = 13, Favorable_Ductal = 22, Favorable_Fibroblast = 105, Favorable_Plasma = 296, Favorable_Schwann = 20, Other = 19312 
-    ## Diagnostic: assay Spatial
-
-### Step 4: Heatmap of cell-type-specific markers
-
-``` r
-cat("Step 4: Heatmap of cell-type-specific markers...\n")
-```
-
-    ## Step 4: Heatmap of cell-type-specific markers...
-
-``` r
-if (exists("markers_by_ct") && !is.null(markers_by_ct) && nrow(markers_by_ct) > 0 && exists("ct_col_markers") && !is.null(ct_col_markers)) {
-  suppressPackageStartupMessages(library(dplyr))
-  n_top_per_group <- 5
-  top_genes_ct <- markers_by_ct %>%
-    group_by(.data$cluster) %>%
-    slice_min(.data$p_val_adj, n = n_top_per_group) %>%
-    pull(.data$gene) %>%
-    unique()
-  top_genes_ct <- top_genes_ct[top_genes_ct %in% rownames(seurat)]
-  if (length(top_genes_ct) > 0) {
-    expr <- tryCatch(
-      Seurat::GetAssayData(seurat, layer = "data", assay = assay_use),
-      error = function(e) Seurat::GetAssayData(seurat, slot = "data", assay = assay_use)
-    )
-    if (is.null(expr) || ncol(expr) == 0) {
-      expr <- tryCatch(
-        SeuratObject::LayerData(seurat, layer = "data", assay = assay_use),
-        error = function(e) tryCatch(SeuratObject::LayerData(seurat, layer = "counts", assay = assay_use), error = function(e2) NULL)
-      )
-    }
-    if (!is.null(expr) && ncol(expr) > 0) {
-    mat <- as.matrix(expr[top_genes_ct, , drop = FALSE])
-    mat_scaled <- t(scale(t(mat)))
-    mat_scaled[mat_scaled < -3] <- -3
-    mat_scaled[mat_scaled > 3] <- 3
-    meta <- seurat@meta.data
-    meta$pg <- meta[[group_col]]
-    meta$ct <- as.character(meta[[ct_col_markers]])
-    meta$ct_ok <- !is.na(meta$ct) & nzchar(trimws(meta$ct))
-    meta$combined_group <- "Other"
-    meta$combined_group[meta$pg == "Most Adverse" & meta$ct_ok] <- paste0("Adverse_", gsub(" ", "_", meta$ct[meta$pg == "Most Adverse" & meta$ct_ok]))
-    meta$combined_group[meta$pg == "Most Favorable" & meta$ct_ok] <- paste0("Favorable_", gsub(" ", "_", meta$ct[meta$pg == "Most Favorable" & meta$ct_ok]))
-    ord <- order(meta$combined_group, meta[[score_col]])
-    mat_scaled <- mat_scaled[, ord, drop = FALSE]
-    meta_ord <- meta[ord, ]
-    if (requireNamespace("pheatmap", quietly = TRUE)) {
-      ann_col <- data.frame(
-        `Prognostic × Cell type` = factor(meta_ord$combined_group),
-        `PhenoMapR Score` = meta_ord[[score_col]],
-        check.names = FALSE
-      )
-      rownames(ann_col) <- colnames(mat_scaled)
-      pal_score <- colorRampPalette(c("#2166AC", "#F7F7F7", "#B2182B"))(100)
-      heatmap_colors <- if (requireNamespace("paletteer", quietly = TRUE)) {
-        colorRampPalette(paletteer::paletteer_d("MexBrewer::Vendedora"))(100)
-      } else {
-        colorRampPalette(c("#2166AC", "#F7F7F7", "#B2182B"))(100)
-      }
-      ann_colors <- list(
-        `PhenoMapR Score` = pal_score
-      )
-      pheatmap::pheatmap(
-        mat_scaled,
-        scale = "none",
-        cluster_cols = FALSE,
-        cluster_rows = TRUE,
-        show_colnames = FALSE,
-        annotation_col = ann_col,
-        annotation_colors = ann_colors,
-        color = heatmap_colors,
-        breaks = seq(-3, 3, length.out = 101),
-        main = "Unique markers by adverse/favorable cell type (spatial spots)",
-        fontsize = 12,
-        fontsize_row = 10,
-        treeheight_row = 25
-      )
-    }
-    } else {
-      cat("Could not retrieve expression data for cell-type heatmap.\n")
-    }
-  }
-} else {
-  cat("Skipping heatmap: no cell-type-specific markers found in Step 3.\n")
-}
-```
-
-    ## Skipping heatmap: no cell-type-specific markers found in Step 3.
+In line with the other Pancreatic cancer vignettes, PhenoMapR identifies
+ductal cells (and some fibroblasts) as the most associated cell type
+with an adverse PhenoMapR prognostic score. Alpha, plasma, and beta
+cells are the most associated with the more favorable prognostic signal.
+Interestingly, fibroblasts seems to comprise both adverse and favorable
+phenotypes.
 
 ## Summary
 
@@ -968,9 +642,9 @@ if (exists("markers_by_ct") && !is.null(markers_by_ct) && nrow(markers_by_ct) > 
 
 ## References
 
-- **PRECOG 2.0**: Benard B, Lalgudi S, et al. PRECOG 2.0: an updated
-  resource of pan-cancer gene-level prognostic meta-z scores. *Nucleic
-  Acids Research*. 2026.
+**\[1\]** Benard, B. A. et al. PRECOG update: an augmented resource of
+clinical outcome associations with gene expression for adult, pediatric,
+and immunotherapy cohorts. Nucleic Acids Res. 54, D1579–D1589 (2026).
 
 ## Session Info
 
@@ -999,8 +673,8 @@ sessionInfo()
     ## [1] stats     graphics  grDevices utils     datasets  methods   base     
     ## 
     ## other attached packages:
-    ## [1] dplyr_1.2.0        ggplot2_4.0.2      Seurat_5.4.0       SeuratObject_5.3.0
-    ## [5] sp_2.2-1           PhenoMapR_0.1.0   
+    ## [1] dplyr_1.2.0        googledrive_2.1.2  ggplot2_4.0.2      Seurat_5.4.0      
+    ## [5] SeuratObject_5.3.0 sp_2.2-1           PhenoMapR_0.1.0   
     ## 
     ## loaded via a namespace (and not attached):
     ##   [1] RColorBrewer_1.1-3     jsonlite_2.0.0         magrittr_2.0.4        
@@ -1023,26 +697,26 @@ sessionInfo()
     ##  [52] gargle_1.6.1           withr_3.0.2            S7_0.2.1              
     ##  [55] fastSave_0.1.0         fastDummies_1.7.5      MASS_7.3-65           
     ##  [58] tools_4.5.3            lmtest_0.9-40          otel_0.2.0            
-    ##  [61] googledrive_2.1.2      httpuv_1.6.17          future.apply_1.20.2   
-    ##  [64] goftest_1.2-3          glue_1.8.0             nlme_3.1-168          
-    ##  [67] promises_1.5.0         grid_4.5.3             Rtsne_0.17            
-    ##  [70] cluster_2.1.8.2        reshape2_1.4.5         generics_0.1.4        
-    ##  [73] gtable_0.3.6           spatstat.data_3.1-9    tidyr_1.3.2           
-    ##  [76] data.table_1.18.2.1    spatstat.geom_3.7-0    RcppAnnoy_0.0.23      
-    ##  [79] ggrepel_0.9.8          RANN_2.6.2             pillar_1.11.1         
-    ##  [82] stringr_1.6.0          spam_2.11-3            RcppHNSW_0.6.0        
-    ##  [85] limma_3.66.0           later_1.4.8            splines_4.5.3         
-    ##  [88] lattice_0.22-9         survival_3.8-6         deldir_2.0-4          
-    ##  [91] tidyselect_1.2.1       miniUI_0.1.2           pbapply_1.7-4         
-    ##  [94] knitr_1.51             gridExtra_2.3          scattermore_1.2       
-    ##  [97] xfun_0.56              statmod_1.5.1          matrixStats_1.5.0     
-    ## [100] pheatmap_1.0.13        stringi_1.8.7          lazyeval_0.2.2        
-    ## [103] yaml_2.3.12            evaluate_1.0.5         codetools_0.2-20      
-    ## [106] tibble_3.3.1           cli_3.6.5              uwot_0.2.4            
-    ## [109] xtable_1.8-8           reticulate_1.45.0      systemfonts_1.3.2     
-    ## [112] jquerylib_0.1.4        Rcpp_1.1.1             globals_0.19.1        
-    ## [115] spatstat.random_3.4-4  png_0.1-9              spatstat.univar_3.1-7 
-    ## [118] parallel_4.5.3         pkgdown_2.2.0          presto_1.0.0          
-    ## [121] dotCall64_1.2          listenv_0.10.1         viridisLite_0.4.3     
-    ## [124] scales_1.4.0           ggridges_0.5.7         purrr_1.2.1           
-    ## [127] rlang_1.1.7            cowplot_1.2.0
+    ##  [61] httpuv_1.6.17          future.apply_1.20.2    goftest_1.2-3         
+    ##  [64] glue_1.8.0             nlme_3.1-168           promises_1.5.0        
+    ##  [67] grid_4.5.3             Rtsne_0.17             cluster_2.1.8.2       
+    ##  [70] reshape2_1.4.5         generics_0.1.4         gtable_0.3.6          
+    ##  [73] spatstat.data_3.1-9    tidyr_1.3.2            data.table_1.18.2.1   
+    ##  [76] spatstat.geom_3.7-0    RcppAnnoy_0.0.23       ggrepel_0.9.8         
+    ##  [79] RANN_2.6.2             pillar_1.11.1          stringr_1.6.0         
+    ##  [82] spam_2.11-3            RcppHNSW_0.6.0         limma_3.66.0          
+    ##  [85] later_1.4.8            splines_4.5.3          lattice_0.22-9        
+    ##  [88] survival_3.8-6         deldir_2.0-4           tidyselect_1.2.1      
+    ##  [91] miniUI_0.1.2           pbapply_1.7-4          knitr_1.51            
+    ##  [94] gridExtra_2.3          scattermore_1.2        xfun_0.56             
+    ##  [97] statmod_1.5.1          matrixStats_1.5.0      pheatmap_1.0.13       
+    ## [100] stringi_1.8.7          lazyeval_0.2.2         yaml_2.3.12           
+    ## [103] evaluate_1.0.5         codetools_0.2-20       tibble_3.3.1          
+    ## [106] cli_3.6.5              uwot_0.2.4             xtable_1.8-8          
+    ## [109] reticulate_1.45.0      systemfonts_1.3.2      jquerylib_0.1.4       
+    ## [112] Rcpp_1.1.1             globals_0.19.1         spatstat.random_3.4-4 
+    ## [115] png_0.1-9              spatstat.univar_3.1-7  parallel_4.5.3        
+    ## [118] pkgdown_2.2.0          presto_1.0.0           dotCall64_1.2         
+    ## [121] listenv_0.10.1         viridisLite_0.4.3      scales_1.4.0          
+    ## [124] ggridges_0.5.7         purrr_1.2.1            rlang_1.1.7           
+    ## [127] cowplot_1.2.0

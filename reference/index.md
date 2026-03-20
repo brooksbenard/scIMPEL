@@ -62,6 +62,8 @@ Define adverse/favorable groups and find marker genes.
   : Define Phenotype Groups (Top and Bottom Percentile)
 - [`find_phenotype_markers()`](https://brooksbenard.github.io/PhenoMapR/reference/find_phenotype_markers.md)
   : Find Unique Marker Genes for Adverse and Favorable Phenotype Groups
+- [`plot_phenotype_markers()`](https://brooksbenard.github.io/PhenoMapR/reference/plot_phenotype_markers.md)
+  : Plot phenotype marker gene heatmaps (ComplexHeatmap)
 
 ## Visualization
 

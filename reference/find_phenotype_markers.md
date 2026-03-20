@@ -25,6 +25,7 @@ find_phenotype_markers(
   pval_threshold = 0.05,
   verbose = TRUE,
   max_cells_per_ident = 5000L,
+  validate_expression_axes = TRUE,
   ...
 )
 ```
@@ -110,6 +111,13 @@ find_phenotype_markers(
   limit before FindMarkers (default 5000). Reduces memory for large
   objects. Set to `Inf` to disable.
 
+- validate_expression_axes:
+
+  If TRUE (default), check that the expression matrix is genes
+  \\\times\\ cells (transpose when a clear samples \\\times\\ genes
+  layout is detected) and normalize colnames for ID matching. Use
+  log-normalized (e.g. log1p CPM) `data` for matrix input when possible.
+
 - ...:
 
   Additional arguments passed to
@@ -131,6 +139,20 @@ Each data.frame has columns: `gene`, `avg_log2FC`, `pct_in_group`,
 `marker_scope = "cell_type_specific"`, each row is one gene for one cell
 type; the `cell_type` column identifies which type the contrast was
 anchored on (adverse/favorable cells of that type vs all other cells).
+
+## Details
+
+Phenotype tails (e.g. top/bottom 5\\ For
+`marker_scope = "cell_type_specific"`, each test compares cells in
+**(that cell type \\\cap\\ adverse or favorable tail)** to **all other
+cells**. `group_labels` cell IDs must match `colnames(expression)`
+(after trimming); use the same identifiers you used when building the
+score table and phenotype groups.
+
+## See also
+
+[`plot_phenotype_markers()`](https://brooksbenard.github.io/PhenoMapR/reference/plot_phenotype_markers.md)
+for heatmaps of marker expression.
 
 ## Examples
 
