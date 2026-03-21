@@ -271,7 +271,7 @@ precog_scaled_umap <- ggscatter(meta_ordered,
     mid = "#F7F7F7",
     high = "#B2182B",
     midpoint = 0,  
-    name = "PhenoMapR Score"
+    name = "PhenoMapR\nScore"
   ) +
   theme_void() +
     theme(plot.title = element_text(hjust = 0.5)) 
@@ -494,7 +494,7 @@ shows favorable-marker rows, then adverse-marker rows, with
 **`anno_mark`** for the top five genes in each block.
 
 ``` r
-  plot_phenotype_markers(
+plot_phenotype_markers(
     markers = markers,
     expr_mat = expr_mat,
     meta = meta,

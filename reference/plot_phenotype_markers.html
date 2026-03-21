@@ -169,15 +169,29 @@ nothing was plotted).</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Requires suggested packages <strong>ComplexHeatmap</strong> and <strong>circlize</strong>.</p>
 <p>For <code>heatmap_type = "global"</code>, rows are favorable-marker genes then
-adverse-only genes (no duplicate genes in the adverse block). For
-<code>cell_type_specific</code>, rows follow phenotype bin then cell type, matching
-column order.</p>
+adverse-only genes (no duplicate genes in the adverse block). Columns are
+ordered by PhenoMapR score (<code>score_col</code>) from <strong>low to high</strong> across
+all cells in <code>expr_mat</code>. For <code>cell_type_specific</code>, columns follow
+phenotype group, then cell type, then score within each block (see
+<code><a href="find_phenotype_markers.html">find_phenotype_markers</a></code> grouping logic); rows follow phenotype
+bin then cell type, matching that column order.</p>
 <p>Column annotations (top to bottom): phenotype group, cell type, PhenoMapR
-score; annotation names are drawn on the right. Row <code>anno_mark</code> gene
-labels only (no colored row strips). Heatmap and annotation legends are
-drawn on the right (<code>merge_legend = TRUE</code>). Scaled expression uses
-ColorBrewer <strong>RdGy</strong> (11-class): red (low) through white to gray (high).
-No extra gap is inserted between row-split groups (<code>row_gap = 0</code>).</p>
+score (nearest the heatmap first); annotation names on the right; legends
+are drawn explicitly (<code>Legend()</code> + <code>annotation_legend_list</code>;
+<code>merge_legends = TRUE</code> and correct parameter name <code>merge_legends</code>).
+PhenoMapR score colors use the min–max of the score column across
+<strong>all</strong> cells in <code>meta</code>. Row annotations: for <code>left_annotation</code>,
+the first track is leftmost (farthest from the matrix), so <code>anno_mark</code>
+is listed first and phenotype/cell-type strips last (adjacent to the heatmap);
+for <code>right_annotation</code>, strips are first (next to the heatmap) and marks
+last. Adverse-tail strips and gene marks on the <strong>left</strong>, favorable-tail
+strips and gene marks on the <strong>right</strong> (global and cell-type-specific;
+favorable <code>anno_mark</code> uses <code>side = "right"</code>).
+Row-split slice titles are suppressed. Heatmap fill uses ColorBrewer
+<strong>RdGy</strong> (11-class): <strong>high</strong> scaled expression = red, <strong>low</strong>
+= black. Heatmap and column annotation legends merge on the right
+(<code>merge_legends = TRUE</code>; extra right <code>padding</code> for PDFs).
+<code>row_gap = 0</code> between split blocks.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
